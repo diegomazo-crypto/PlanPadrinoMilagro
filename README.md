@@ -33,7 +33,8 @@ archivos estáticos.
 
 ## Publicación en Vercel
 
-El sitio se publica en Vercel desde la rama `main`: https://plan-padrino-milagro.vercel.app
+El sitio se publica en Vercel desde la rama `main` en **https://www.planpadrinomilagro.co**
+(dirección técnica de respaldo: https://plan-padrino-milagro.vercel.app).
 
 El repositorio incluye `vercel.json` (URLs limpias, cabeceras de seguridad y caché de recursos).
 Para reproducir la configuración en otra cuenta:
