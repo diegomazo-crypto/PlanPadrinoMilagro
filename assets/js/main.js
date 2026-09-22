@@ -73,6 +73,15 @@
     form.querySelectorAll(".campo").forEach(function (campo) {
       if (!validarCampo(campo)) valido = false;
     });
+    // Institución (IES): del padrón o declarada manualmente
+    var buscarIes = form.querySelector("#ies-buscar");
+    if (buscarIes) {
+      var manual = form.querySelector("#ies-manual").checked;
+      var campoIes = buscarIes.closest(".campo");
+      var faltaIes = !manual && !form.querySelector("#ies-clave").value;
+      campoIes.classList.toggle("invalido", faltaIes);
+      if (faltaIes) valido = false;
+    }
     // Identificación de la empresa (tipo + número con dígito de verificación)
     var selTipo = form.querySelector("#emp-tipo-id"), inpNit = form.querySelector("#emp-nit");
     if (selTipo && inpNit && window.PPM_TERRITORIOS && selTipo.value && !inpNit.disabled) {
@@ -129,6 +138,11 @@
     form.querySelectorAll("input[type=checkbox][data-compromiso]").forEach(function (c) {
       datos[c.name] = c.checked ? "sí" : "no";
     });
+    if (datos.institucion_manual === "sí") {
+      datos.institucion_clave = "";
+      datos.institucion = datos.institucion_nombre_manual || "";
+    }
+    delete datos.institucion_busqueda; delete datos.institucion_nombre_manual; delete datos.institucion_manual;
     if (datos.municipio === "Otro" || (!datos.municipio && datos.municipio_otro)) datos.municipio = datos.municipio_otro || "";
     if (datos.camara_nombre === "Otra" || (!datos.camara_nombre && datos.camara_otra)) datos.camara_nombre = datos.camara_otra || "";
     delete datos.municipio_otro; delete datos.camara_otra;
@@ -169,8 +183,8 @@
 
     var datos = recolectar(form);
 
-    if (!endpoint && tipo === "empresas") {
-      enviarRegistro(form, datos, estado, boton);
+    if (!endpoint && (tipo === "empresas" || tipo === "ies")) {
+      enviarRegistro(form, datos, estado, boton, tipo);
       return;
     }
     if (!endpoint) {
@@ -200,10 +214,16 @@
 
   /* Inscripción de empresas: crea la cuenta en el portal (API propia). Si la API no
      está disponible (sitio servido sin funciones), cae al envío por correo. */
-  function enviarRegistro(form, datos, estado, boton) {
+  var RUTAS = {
+    empresas: { api: "/api/registro", portal: "portal.html", quien: "de empresas" },
+    ies: { api: "/api/ies-registro", portal: "portal-ies.html", quien: "de instituciones" }
+  };
+
+  function enviarRegistro(form, datos, estado, boton, tipo) {
+    var ruta = RUTAS[tipo] || RUTAS.empresas;
     boton.disabled = true;
     boton.textContent = "Enviando…";
-    fetch("/api/registro", {
+    fetch(ruta.api, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       credentials: "same-origin",
@@ -221,8 +241,12 @@
         panel.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
+      if (j._estado === 409 && j.responsableExistente) {
+        mostrar(estado, "ambar", "<strong>" + escapar(j.error) + "</strong> Escriba a <a href='mailto:" + CONFIG.CORREO_CONTACTO + "'>" + CONFIG.CORREO_CONTACTO + "</a>.");
+        return;
+      }
       if (j._estado === 409) {
-        mostrar(estado, "ambar", "<strong>Este correo ya tiene una cuenta.</strong> <a href='portal.html'>Ingrese al portal de empresas</a> con su clave. Si la olvidó, escriba a <a href='mailto:" + CONFIG.CORREO_CONTACTO + "'>" + CONFIG.CORREO_CONTACTO + "</a>.");
+        mostrar(estado, "ambar", "<strong>Este correo ya tiene una cuenta.</strong> <a href='" + ruta.portal + "'>Ingrese al portal " + ruta.quien + "</a> con su clave. Si la olvidó, escriba a <a href='mailto:" + CONFIG.CORREO_CONTACTO + "'>" + CONFIG.CORREO_CONTACTO + "</a>.");
         return;
       }
       if (j._estado === 404 || j._estado === 405) { enviarPorCorreo(form, datos, estado); return; }
@@ -256,7 +280,7 @@
         body: JSON.stringify({ tokenRegistro: token, clave: clave, confirmacion: conf })
       }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { j._estado = r.status; return j; }); })
         .then(function (j) {
-          if (j.ok) { window.location.href = "portal.html"; return; }
+          if (j.ok) { window.location.href = j.tipo === "ies" ? "portal-ies.html" : "portal.html"; return; }
           mostrar(estado, "rojo", "<strong>" + escapar(j.error || "No fue posible crear la clave.") + "</strong>");
         }).catch(function () { mostrar(estado, "rojo", "No fue posible conectar con el servidor. Intente de nuevo."); })
         .then(function () { boton.disabled = false; boton.textContent = boton.getAttribute("data-texto"); });
@@ -356,6 +380,100 @@
       campo.classList.toggle("invalido", Boolean(problema));
       errorNit.textContent = problema || "Indique un número válido.";
     });
+  }
+
+  /* ---------- Formulario de IES: búsqueda en el padrón ---------- */
+  var inpBuscar = document.getElementById("ies-buscar");
+  if (inpBuscar && window.PPM_IES) {
+    var listaSug = document.getElementById("ies-sugerencias"), inpClave = document.getElementById("ies-clave"),
+      inpNombre = document.getElementById("ies-nombre"), ficha = document.getElementById("ies-ficha"),
+      campoFicha = document.getElementById("ies-seleccionada"), notaPadron = document.getElementById("ies-padron-nota"),
+      chkManual = document.getElementById("ies-manual"), camposManual = document.getElementById("ies-manual-campos");
+    var padron = { lista: window.PPM_IES.LISTA, fuente: "respaldo" };
+    var activa = -1;
+
+    function describirPadron() {
+      var n = padron.lista.length;
+      notaPadron.textContent = padron.fuente === "respaldo"
+        ? n + " IES en el padrón de respaldo (SNIES). Escriba para buscar."
+        : n + " IES activas según el SNIES (datos abiertos del MEN). Escriba para buscar.";
+    }
+    describirPadron();
+    fetch("/api/ies-padron", { headers: { "Accept": "application/json" } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j && j.ok && j.ies && j.ies.length) { padron = { lista: j.ies, fuente: j.fuente }; describirPadron(); } })
+      .catch(function () { /* se mantiene el respaldo */ });
+
+    function cerrarSugerencias() { listaSug.hidden = true; listaSug.innerHTML = ""; activa = -1; inpBuscar.setAttribute("aria-expanded", "false"); }
+
+    function seleccionar(ies) {
+      inpClave.value = ies.clave || "";
+      inpNombre.value = ies.nombre;
+      inpBuscar.value = ies.nombre;
+      ficha.innerHTML = "<strong>" + escapar(ies.nombre) + "</strong>" +
+        "<span>" + escapar([ies.caracter, ies.sector].filter(Boolean).join(" · ")) + "</span>" +
+        "<span>" + escapar([ies.municipio, ies.departamento].filter(Boolean).join(", ")) + (ies.codigo ? " · Código SNIES " + escapar(ies.codigo) : "") + "</span>";
+      campoFicha.hidden = false;
+      inpBuscar.closest(".campo").classList.remove("invalido");
+      cerrarSugerencias();
+    }
+
+    function pintarSugerencias() {
+      var q = inpBuscar.value.trim();
+      if (inpClave.value && q === inpNombre.value) { cerrarSugerencias(); return; }
+      inpClave.value = ""; inpNombre.value = ""; campoFicha.hidden = true;
+      if (q.length < 2) { cerrarSugerencias(); return; }
+      var resultados = window.PPM_IES.buscar(q, padron.lista, 10);
+      if (!resultados.length) {
+        listaSug.innerHTML = "<li class='sugerencias__vacio'>No hay coincidencias. Pruebe con otra palabra o marque \"Mi institución no aparece\".</li>";
+      } else {
+        listaSug.innerHTML = resultados.map(function (ies, i) {
+          return "<li role='option' id='ies-op-" + i + "' data-clave='" + escapar(ies.clave) + "'><strong>" + escapar(ies.nombre) + "</strong><small>" +
+            escapar([ies.caracter, ies.municipio || ies.departamento].filter(Boolean).join(" · ")) + "</small></li>";
+        }).join("");
+      }
+      listaSug.hidden = false; activa = -1;
+      inpBuscar.setAttribute("aria-expanded", "true");
+      listaSug._resultados = resultados;
+    }
+
+    inpBuscar.addEventListener("input", pintarSugerencias);
+    inpBuscar.addEventListener("focus", function () { if (!inpClave.value) pintarSugerencias(); });
+    inpBuscar.addEventListener("keydown", function (e) {
+      var items = listaSug.querySelectorAll("li[role=option]");
+      if (listaSug.hidden || !items.length) return;
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        activa = (activa + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+        items.forEach(function (li, i) { li.classList.toggle("activa", i === activa); });
+        inpBuscar.setAttribute("aria-activedescendant", items[activa].id);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (activa >= 0) seleccionar(listaSug._resultados[activa]);
+        else if (items.length === 1) seleccionar(listaSug._resultados[0]);
+      } else if (e.key === "Escape") { cerrarSugerencias(); }
+    });
+    listaSug.addEventListener("mousedown", function (e) {
+      var li = e.target.closest("li[role=option]");
+      if (!li) return;
+      e.preventDefault();
+      var clave = li.getAttribute("data-clave");
+      var ies = null;
+      (listaSug._resultados || []).forEach(function (x) { if (x.clave === clave) ies = x; });
+      if (ies) seleccionar(ies);
+    });
+    document.addEventListener("click", function (e) { if (!inpBuscar.contains(e.target) && !listaSug.contains(e.target)) cerrarSugerencias(); });
+
+    function alternarManual() {
+      var manual = chkManual.checked;
+      camposManual.hidden = !manual;
+      document.getElementById("campo-ies-buscar").hidden = manual;
+      campoFicha.hidden = manual || !inpClave.value;
+      ["ies-nombre-manual", "ies-caracter", "ies-departamento", "ies-ciudad"].forEach(function (id) { document.getElementById(id).required = manual; });
+      if (manual) { inpClave.value = ""; inpNombre.value = ""; inpBuscar.value = ""; cerrarSugerencias(); inpBuscar.closest(".campo").classList.remove("invalido"); }
+    }
+    chkManual.addEventListener("change", alternarManual);
+    alternarManual();
   }
 
   /* ---------- Año en el pie ---------- */

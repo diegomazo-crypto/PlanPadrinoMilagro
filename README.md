@@ -13,6 +13,7 @@ afectadas por el terremoto del 10 de agosto de 2026.
 | `ies.html` | Guía de participación para IES, estudiantes y docentes y formulario de vinculación institucional. |
 | `recursos.html` | Documentos descargables, estructura del formato común de reporte, enlaces, preguntas frecuentes y contacto. |
 | `portal.html` | Portal de empresas: inicio de sesión, aceptación del compromiso y los términos, autodiagnóstico por pasos y resultados. |
+| `portal-ies.html` | Portal de instituciones: inicio de sesión del responsable y administración de los grupos que apadrinan empresas. |
 
 ## Estructura
 
@@ -22,16 +23,21 @@ afectadas por el terremoto del 10 de agosto de 2026.
 ├── ies.html
 ├── recursos.html
 ├── portal.html
-├── api/                    Funciones de servidor (Vercel): registro, clave, sesion, aceptacion, diagnostico, exportar
-├── lib/                    Cifrado, almacenamiento, sesión y acceso a los registros
+├── portal-ies.html
+├── api/                    Funciones de servidor (Vercel): registro, clave, sesion, aceptacion, diagnostico, exportar,
+│                           ies-padron, ies-registro, grupos
+├── lib/                    Cifrado, almacenamiento, sesión y acceso a los registros (empresas e IES)
 ├── assets/
 │   ├── css/styles.css      Hoja de estilos
 │   ├── js/config.js        Configuración (endpoint del formulario de IES, correo)
 │   ├── js/main.js          Menú, índice lateral, validación y envío de formularios
 │   ├── js/instrumento.js   Instrumento de autodiagnóstico (modelo CRL), usado en navegador y servidor
+│   ├── js/ies-snies.js     Padrón de respaldo de IES activas (SNIES), usado en navegador y servidor
 │   ├── js/portal.js        Lógica del portal de empresas
+│   ├── js/portal-ies.js    Lógica del portal de instituciones (grupos)
 │   └── img/
 ├── scripts/servidor-local.js   Servidor de desarrollo (sitio + API) para pruebas locales
+├── scripts/actualizar-padron-ies.js   Regenera el padrón de IES desde una exportación oficial del SNIES
 └── docs/                   PDFs descargables (ver docs/README.md)
 ```
 
@@ -55,6 +61,44 @@ Almacenamiento: un archivo por empresa en Vercel Blob (acceso privado), cifrado 
 guardarse. Las claves de acceso se guardan con hash scrypt. Las sesiones son cookies firmadas (HttpOnly).
 Ninguna empresa puede ver datos de otra: cada solicitud opera solo sobre el registro de la sesión.
 
+## Portal de instituciones (IES) y grupos
+
+Flujo de una IES:
+
+1. **Vinculación** en `ies.html`. El responsable designado busca la institución en el **padrón de IES activas
+   del SNIES** (o la declara manualmente si no aparece), registra sus datos de contacto, la capacidad de
+   acompañamiento y acepta los compromisos institucionales en bloque. Cada institución admite un único
+   responsable con cuenta; un segundo intento recibe un aviso con el correo enmascarado del responsable actual.
+2. **Clave de acceso** con las mismas reglas que las empresas (no puede ser ni contener datos de la inscripción).
+   El usuario es el correo institucional del responsable.
+3. **Portal de instituciones** (`portal-ies.html`): el responsable crea, edita y elimina los **grupos que
+   apadrinan**. Cada grupo registra nombre, programa, campo de asesoramiento principal y secundarios, temas,
+   modalidad, territorios, periodo de inicio, capacidad de empresas, docente tutor (contacto principal) y los
+   miembros con rol, programa, semestre y contacto. Con esos datos la secretaría técnica hace el emparejamiento.
+
+Los registros de IES se guardan cifrados en `ies/<id>.json`, separados de los de empresas. Las sesiones llevan
+el tipo de cuenta dentro del token firmado, de modo que una cuenta de empresa no puede usar las rutas de IES ni
+al contrario, aunque compartan correo.
+
+### Padrón de IES activas (SNIES)
+
+`GET /api/ies-padron` devuelve el padrón que usa el formulario. Orden de fuentes:
+
+1. **Datos abiertos del MEN**: conjunto `MEN_INSTITUCIONES EDUCACIÓN SUPERIOR` (datos.gov.co, `n5yy-8nav`),
+   que replica el SNIES. Se filtran las IES con estado *activa*, se guarda una copia cifrada y se cachea 24 h.
+   La URL puede cambiarse con la variable `PPM_URL_PADRON_IES`.
+2. **Última copia** descargada, si la consulta en vivo falla.
+3. **Padrón de respaldo** incorporado en `assets/js/ies-snies.js` (227 IES, sin código SNIES), que también se
+   usa en el navegador mientras responde la API.
+
+Para reemplazar el respaldo por una exportación oficial (CSV o JSON del SNIES o de datos.gov.co):
+
+```
+node scripts/actualizar-padron-ies.js exportacion-snies.csv
+```
+
+La respuesta de `/api/ies-padron` indica en `fuente` cuál de las tres se está usando.
+
 ### Variables de entorno en Vercel (Settings → Environment Variables)
 
 | Variable | Cómo obtenerla | Uso |
@@ -77,6 +121,8 @@ cuando la inscripción falla en producción.
 ```
 https://www.planpadrinomilagro.co/api/exportar?formato=csv     → resumen en CSV (una fila por empresa)
 https://www.planpadrinomilagro.co/api/exportar                 → JSON completo (inscripción, aceptaciones, respuestas y resultados)
+https://www.planpadrinomilagro.co/api/exportar?tipo=ies&formato=csv → IES vinculadas y sus grupos (una fila por grupo)
+https://www.planpadrinomilagro.co/api/exportar?tipo=ies        → JSON completo de las IES, responsables y grupos
 ```
 
 Envíe la clave de administración en la cabecera `x-clave-admin` (por ejemplo con `curl -H`) o como
@@ -126,17 +172,32 @@ python3 -m http.server 8080
 
 ## Identidad visual
 
-El sitio aplica el *Manual de Identidad Visual v1* del Plan (logo "Sol de la Reconstrucción", septiembre 2026):
+El sitio aplica el **Manual de Marca v2** (septiembre 2026). La denominación institucional sigue siendo
+*Plan Padrino Milagro*; la marca visual de uso público es *Plan Milagro* y el descriptor «Para reconstrucción
+productiva» forma parte del lockup.
 
 | Elemento | Valor |
 |---|---|
-| Amarillo Sol (acento) | `#FCD116` |
-| Azul Institucional (enlaces, botón primario) | `#003893` |
-| Rojo Bandera (acentos, alertas, etiquetas) | `#CE1126` |
-| Azul Marino (texto, íconos, fondos oscuros) | `#14213D` |
-| Gris Texto | `#5B6472` |
-| Fondo Claro / Borde | `#F4F5F7` / `#E4E6EA` |
-| Tipografía | Manrope 800 (H1), 700 (H2, botones, etiquetas), 500 (cuerpo) |
+| Azul profundo (dominante: texto, botón primario, pie) | `#08366A` |
+| Amarillo dorado (acento principal; nunca como texto sobre blanco) | `#E9A619` |
+| Rojo institucional (acento puntual: etiquetas, cifras, llamados a la acción) | `#E3141E` |
+| Gris claro (fondos, reglas, bordes; nunca texto) | `#C2C3C7` |
+| Texto secundario (contraste AA) | `#4C5A6E` |
+| Fondo claro / Borde | `#F4F6F9` / `#DCDEE2` |
+| Titulares, botones y etiquetas | Archivo 600–800 (sustitutos: Arial Black, Helvetica Neue Bold) |
+| Texto corrido | Source Sans 3 400–600 (sustitutos: Calibri, Segoe UI) |
+| Barra de marca | azul · amarillo · rojo · gris |
 
-Logos en `assets/img/`: `logo.svg` (uso principal), `logo-blanco.svg` (fondos oscuros),
-`logo-uncolor.svg` (impresión a un color) y `favicon.svg` (sol y brote).
+Logos en `assets/img/` (nomenclatura del manual; versiones raster derivadas del JPG de propuesta mientras
+se recibe el vectorial):
+
+| Archivo | Uso |
+|---|---|
+| `PlanMilagro_Logo_Horizontal_Color_v2_202609.png` | Lockup horizontal a color: encabezado e imagen social. Mínimo 160 px de ancho. |
+| `PlanMilagro_Simbolo_Color_v2_202609.png` | Símbolo aislado: favicon, avatares. Mínimo 32 px. |
+| `PlanMilagro_Logo_Mono_Azul_v2_202609.png` | Monocromático azul (impresión a una tinta). |
+| `PlanMilagro_Logo_Mono_Blanco_v2_202609.png` | Calado en blanco: pie de página sobre azul profundo. |
+| `favicon.png`, `apple-touch-icon.png` | Símbolo con 12 % de margen. |
+
+Mensajes del manual usados en el sitio: «Oportunidades que siembran más futuros» (portada) y «Juntos
+reconstruimos más» (cierre del pie).

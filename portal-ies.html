@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portal de instituciones — Plan Padrino Milagro</title>
+  <meta name="description" content="Portal de las Instituciones de Educación Superior vinculadas al Plan Padrino Milagro: administración de los grupos que apadrinan empresas.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/img/favicon.png?v=20260922f" type="image/png" sizes="64x64">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20260922f">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260922f">
+</head>
+<body>
+<a class="salto" href="#contenido">Ir al contenido</a>
+
+<header class="encabezado">
+  <div class="tricolor" aria-hidden="true"></div>
+  <div class="contenedor encabezado__interior">
+    <a class="marca" href="index.html">
+      <img class="marca__logo" src="assets/img/PlanMilagro_Logo_Horizontal_Color_v2_202609.png?v=20260922f" alt="Plan Milagro, para reconstrucción productiva" width="220" height="48">
+    </a>
+    <button class="nav-toggle" aria-expanded="false" aria-controls="nav-principal" aria-label="Abrir menú">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <nav class="nav" id="nav-principal" aria-label="Principal">
+      <a href="index.html">Plan Milagro</a>
+      <a href="empresas.html">Empresas</a>
+      <a href="ies.html">Instituciones</a>
+      <a href="recursos.html">Recursos</a>
+      <a href="portal-ies.html" aria-current="page">Portal IES</a>
+      <button class="boton boton--contorno boton--peq" id="boton-salir" type="button" hidden>Cerrar sesión</button>
+    </nav>
+  </div>
+</header>
+
+<main id="contenido">
+
+  <section class="seccion" id="vista-cargando">
+    <div class="contenedor contenedor--texto"><p class="entradilla" style="text-align:center">Cargando…</p></div>
+  </section>
+
+  <!-- ===== INICIO DE SESIÓN ===== -->
+  <section class="seccion seccion--gris" id="vista-login" hidden>
+    <div class="contenedor">
+      <div class="seccion__cabecera seccion__cabecera--centro">
+        <span class="sobretitulo">Portal de instituciones</span>
+        <h1 class="portal__titulo">Ingrese con el correo del responsable designado</h1>
+        <p class="entradilla">Aquí creará y administrará los grupos de estudiantes y docentes que apadrinarán empresas. Con esa información la secretaría técnica hará el emparejamiento con los empresarios.</p>
+      </div>
+      <div class="formulario-envoltura formulario-envoltura--angosta">
+        <form class="formulario" id="form-login" novalidate>
+          <fieldset>
+            <legend>Inicio de sesión</legend>
+            <div class="campos">
+              <div class="campo campo--ancho">
+                <label for="login-correo">Correo institucional <span class="req">*</span></label>
+                <input type="email" id="login-correo" name="correo" required autocomplete="username">
+                <span class="error">Indique el correo con el que vinculó a la institución.</span>
+              </div>
+              <div class="campo campo--ancho">
+                <label for="login-clave">Clave de acceso <span class="req">*</span></label>
+                <input type="password" id="login-clave" name="clave" required autocomplete="current-password">
+                <span class="error">Indique su clave.</span>
+              </div>
+            </div>
+          </fieldset>
+          <div class="formulario__acciones">
+            <button class="boton boton--primario" type="submit" data-texto="Ingresar">Ingresar</button>
+            <span class="formulario__nota">¿Aún no vinculó a su institución? <a href="ies.html#inscripcion">Diligencie el formulario de vinculación</a>.</span>
+          </div>
+          <div class="formulario__estado" aria-live="polite"></div>
+        </form>
+        <p class="portal__ayuda">¿Es una empresa? <a href="portal.html">Ingrese al portal de empresas</a>. Si olvidó su clave, escriba a <a href="mailto:padrinomilagro@ceipa.edu.co">padrinomilagro@ceipa.edu.co</a> desde el correo registrado.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PANEL DE LA IES ===== -->
+  <section class="seccion seccion--gris" id="vista-panel" hidden>
+    <div class="contenedor panel-ies">
+      <div class="panel-ies__cabecera">
+        <span class="sobretitulo">Portal de instituciones</span>
+        <h1 id="panel-ies-nombre"></h1>
+        <p class="panel-ies__meta" id="panel-ies-meta"></p>
+        <p class="panel-ies__meta" id="panel-responsable"></p>
+        <div class="panel-ies__acciones">
+          <button class="boton boton--primario" type="button" id="boton-nuevo-grupo">Crear un grupo</button>
+          <span class="formulario__nota" id="panel-resumen"></span>
+        </div>
+      </div>
+
+      <div id="lista-grupos" class="grupos" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- ===== FORMULARIO DE GRUPO ===== -->
+  <section class="seccion" id="vista-grupo" hidden>
+    <div class="contenedor">
+      <div class="seccion__cabecera">
+        <span class="sobretitulo">Grupo que apadrina</span>
+        <h1 class="portal__titulo" id="grupo-titulo">Crear un grupo</h1>
+        <p class="entradilla">Cada grupo acompaña a una empresa (o a las que indique como capacidad). Los datos del campo de asesoramiento, la modalidad, los territorios y los contactos son los que usa la secretaría técnica para el emparejamiento.</p>
+      </div>
+      <div class="formulario-envoltura formulario-envoltura--grupo">
+        <form class="formulario" id="form-grupo" novalidate>
+          <input type="hidden" name="id" id="grupo-id">
+
+          <fieldset>
+            <legend>Identificación del grupo</legend>
+            <div class="campos">
+              <div class="campo">
+                <label for="g-nombre">Nombre del grupo <span class="req">*</span></label>
+                <input type="text" id="g-nombre" name="nombre" required placeholder="Ej.: Equipo Finanzas 1 – Contaduría">
+                <span class="error">Indique un nombre para el grupo.</span>
+              </div>
+              <div class="campo">
+                <label for="g-programa">Programa(s) académico(s) <span class="req">*</span></label>
+                <input type="text" id="g-programa" name="programa" required placeholder="Ej.: Administración de Empresas, Contaduría Pública">
+                <span class="error">Indique el programa o programas.</span>
+              </div>
+              <div class="campo">
+                <label for="g-campo">Campo de asesoramiento principal <span class="req">*</span></label>
+                <select id="g-campo" name="campo" required>
+                  <option value="">Seleccione…</option>
+                  <option>Finanzas y recuperación económica</option>
+                  <option>Ventas, clientes y reactivación comercial</option>
+                  <option>Operaciones y continuidad del negocio</option>
+                  <option>Estrategia, modelo de negocio y visión de futuro</option>
+                </select>
+                <span class="error">Seleccione el campo principal.</span>
+              </div>
+              <div class="campo">
+                <label for="g-estado">Estado del grupo</label>
+                <select id="g-estado" name="estado">
+                  <option value="disponible">Disponible para emparejar</option>
+                  <option value="asignado">Ya asignado a una empresa</option>
+                  <option value="inactivo">Inactivo</option>
+                </select>
+              </div>
+              <div class="campo campo--ancho">
+                <label for="g-temas">Temas o capacidades específicas que domina el grupo</label>
+                <textarea id="g-temas" name="temas" placeholder="Ej.: flujo de caja, costos y punto de equilibrio, reestructuración de deuda, mercadeo digital para comercio minorista…"></textarea>
+              </div>
+            </div>
+            <div class="campo campo--grupo" data-min="0" style="margin-top:16px">
+              <span class="campo__titulo" style="font-weight:700;font-size:.95rem;display:block;margin-bottom:8px">Campos secundarios que también puede cubrir</span>
+              <div class="opciones">
+                <label class="opcion"><input type="checkbox" name="campos_secundarios" value="Finanzas y recuperación económica"><span>Finanzas y recuperación económica</span></label>
+                <label class="opcion"><input type="checkbox" name="campos_secundarios" value="Ventas, clientes y reactivación comercial"><span>Ventas, clientes y reactivación comercial</span></label>
+                <label class="opcion"><input type="checkbox" name="campos_secundarios" value="Operaciones y continuidad del negocio"><span>Operaciones y continuidad del negocio</span></label>
+                <label class="opcion"><input type="checkbox" name="campos_secundarios" value="Estrategia, modelo de negocio y visión de futuro"><span>Estrategia, modelo de negocio y visión de futuro</span></label>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Disponibilidad para el emparejamiento</legend>
+            <div class="campo campo--grupo" data-min="1">
+              <span class="campo__titulo" style="font-weight:700;font-size:.95rem;display:block;margin-bottom:8px">Modalidad <span class="req">*</span></span>
+              <div class="opciones">
+                <label class="opcion"><input type="checkbox" name="modalidad" value="Presencial"><span>Presencial</span></label>
+                <label class="opcion"><input type="checkbox" name="modalidad" value="Remota"><span>Remota</span></label>
+                <label class="opcion"><input type="checkbox" name="modalidad" value="Híbrida"><span>Híbrida</span></label>
+              </div>
+              <span class="error">Seleccione al menos una modalidad.</span>
+            </div>
+            <div class="campo campo--grupo" data-min="1" style="margin-top:16px">
+              <span class="campo__titulo" style="font-weight:700;font-size:.95rem;display:block;margin-bottom:8px">Territorios que puede atender <span class="req">*</span></span>
+              <div class="opciones">
+                <label class="opcion"><input type="checkbox" name="territorios" value="Chocó"><span>Chocó</span></label>
+                <label class="opcion"><input type="checkbox" name="territorios" value="Risaralda"><span>Risaralda</span></label>
+                <label class="opcion"><input type="checkbox" name="territorios" value="Caldas"><span>Caldas</span></label>
+                <label class="opcion"><input type="checkbox" name="territorios" value="Quindío"><span>Quindío</span></label>
+                <label class="opcion"><input type="checkbox" name="territorios" value="Valle del Cauca"><span>Valle del Cauca</span></label>
+                <label class="opcion"><input type="checkbox" name="territorios" value="Sin preferencia"><span>Sin preferencia (cualquiera)</span></label>
+              </div>
+              <span class="error">Seleccione al menos un territorio.</span>
+            </div>
+            <div class="campos" style="margin-top:16px">
+              <div class="campo">
+                <label for="g-periodo">Periodo en que puede iniciar</label>
+                <select id="g-periodo" name="periodo">
+                  <option value="">Seleccione…</option>
+                  <option>Inmediatamente (segundo semestre de 2026)</option>
+                  <option>Primer semestre de 2027</option>
+                  <option>Por definir</option>
+                </select>
+              </div>
+              <div class="campo">
+                <label for="g-capacidad">Empresas que puede acompañar a la vez</label>
+                <select id="g-capacidad" name="empresas_capacidad">
+                  <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                </select>
+              </div>
+              <div class="campo campo--ancho">
+                <label for="g-disponibilidad">Disponibilidad horaria</label>
+                <input type="text" id="g-disponibilidad" name="disponibilidad" placeholder="Ej.: martes y jueves 2–5 p. m.; sábados en la mañana">
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Docente o tutor responsable del grupo</legend>
+            <p>Persona de la institución que supervisa al grupo. Es el contacto principal para la secretaría técnica y el empresario.</p>
+            <div class="campos">
+              <div class="campo">
+                <label for="g-tutor-nombre">Nombre completo <span class="req">*</span></label>
+                <input type="text" id="g-tutor-nombre" name="tutor_nombre" required>
+                <span class="error">Indique el nombre del tutor.</span>
+              </div>
+              <div class="campo">
+                <label for="g-tutor-cargo">Cargo o vinculación</label>
+                <input type="text" id="g-tutor-cargo" name="tutor_cargo" placeholder="Ej.: Docente de tiempo completo, Coordinador de prácticas">
+              </div>
+              <div class="campo">
+                <label for="g-tutor-correo">Correo <span class="req">*</span></label>
+                <input type="email" id="g-tutor-correo" name="tutor_correo" required>
+                <span class="error">Indique un correo válido.</span>
+              </div>
+              <div class="campo">
+                <label for="g-tutor-tel">Teléfono</label>
+                <input type="tel" id="g-tutor-tel" name="tutor_telefono">
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Miembros del grupo</legend>
+            <p>Estudiantes, egresados o docentes que integran el grupo (4 o 5 personas recomendadas). Cada miembro necesita nombre y al menos un dato de contacto.</p>
+            <div class="miembros" id="miembros"></div>
+            <div class="formulario__acciones" style="margin-top:12px">
+              <button class="boton boton--contorno boton--peq" type="button" id="boton-agregar-miembro">Agregar miembro</button>
+              <span class="error" id="miembros-error" style="display:none;color:var(--rojo);font-size:.85rem">Agregue al menos un miembro con nombre y un dato de contacto.</span>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Observaciones</legend>
+            <div class="campos">
+              <div class="campo campo--ancho">
+                <label for="g-observaciones">Notas para la secretaría técnica</label>
+                <textarea id="g-observaciones" name="observaciones" placeholder="Restricciones, preferencias de sector empresarial, experiencia previa del grupo, etc."></textarea>
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="formulario__acciones">
+            <button class="boton boton--primario" type="submit" data-texto="Guardar grupo">Guardar grupo</button>
+            <button class="boton boton--contorno" type="button" id="boton-cancelar-grupo">Cancelar</button>
+          </div>
+          <div class="formulario__estado" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pie">
+  <div class="tricolor" aria-hidden="true"></div>
+  <div class="contenedor">
+    <p class="pie__cierre">Juntos reconstruimos más</p>
+    <div class="pie__legal">
+      © <span data-anio>2026</span> Plan Padrino Milagro para la Reconstrucción Productiva. La información de los grupos se usa solo para el emparejamiento y el seguimiento del acompañamiento.
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/portal-ies.js?v=20260922f"></script>
+</body>
+</html>
