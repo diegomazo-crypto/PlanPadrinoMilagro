@@ -31,7 +31,12 @@ afectadas por el terremoto del 10 de agosto de 2026.
 No requiere proceso de construcción ni dependencias. Puede servirse desde cualquier alojamiento de
 archivos estáticos.
 
-## Publicación en Vercel
+## Publicación en GitHub Pages
+
+El flujo `.github/workflows/pages.yml` publica la raíz del repositorio en GitHub Pages en cada cambio a
+`main`. Requiere que el repositorio sea público (o un plan de pago de GitHub).
+
+## Publicación en Vercel (alternativa)
 
 El repositorio incluye `vercel.json` (URLs limpias, cabeceras de seguridad y caché de recursos).
 Para publicar:
