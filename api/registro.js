@@ -54,6 +54,7 @@ module.exports = async function (req, res) {
     responder(res, 201, { ok: true, tokenRegistro, correo });
   } catch (e) {
     console.error("registro:", e);
-    error(res, 500, "No fue posible guardar la inscripción. Intente de nuevo.");
+    const causa = String((e && e.message) || "").slice(0, 160);
+    error(res, 500, "No fue posible guardar la inscripción. Intente de nuevo.", { causa });
   }
 };

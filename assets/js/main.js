@@ -212,7 +212,7 @@
         return;
       }
       if (j._estado === 404 || j._estado === 405) { enviarPorCorreo(form, datos, estado); return; }
-      var detalle = j.campos ? " Campos: " + j.campos.join(", ") + "." : "";
+      var detalle = j.campos ? " Campos: " + j.campos.join(", ") + "." : (j.causa ? " (" + j.causa + ")" : "");
       mostrar(estado, "rojo", "<strong>" + escapar(j.error || "No fue posible enviar la inscripción.") + "</strong>" + escapar(detalle));
     }).catch(function () {
       enviarPorCorreo(form, datos, estado);
