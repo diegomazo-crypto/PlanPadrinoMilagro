@@ -6,7 +6,8 @@ transparente o SVG; si usa SVG, cambie la extensión también en `index.html`):
 | Archivo | Entidad |
 |---|---|
 | `ceipa.png` | Institución Universitaria CEIPA |
-| `ddf.png` | Diálogos de Futuro (DDF) |
+| `ddf.png` | Diálogos de Futuro (DDF). Versión en color (marco azul, texto oscuro) generada a partir del logo oficial en alta resolución. |
+| `ddf-blanco.png` | Diálogos de Futuro, versión blanca oficial para fondos oscuros (no se usa aún en el sitio). |
 | `ascun.png` | ASCUN — Asociación Colombiana de Universidades |
 | `asiesca.png` | ASIESCA — Asociación de Instituciones de Educación Superior del Caribe |
 | `exe.png` | Fundación Empresarios por la Educación (ExE) |
