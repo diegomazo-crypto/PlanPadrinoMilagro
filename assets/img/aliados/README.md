@@ -1,6 +1,6 @@
 # Logos de las entidades líderes
 
-Coloque aquí los logotipos oficiales con estos nombres exactos (PNG con fondo
+Logotipos tomados del comunicado oficial del Plan (agosto de 2026). Para reemplazarlos por versiones de mayor resolución, use estos nombres exactos (PNG con fondo
 transparente o SVG; si usa SVG, cambie la extensión también en `index.html`):
 
 | Archivo | Entidad |
@@ -8,7 +8,9 @@ transparente o SVG; si usa SVG, cambie la extensión también en `index.html`):
 | `ceipa.png` | Institución Universitaria CEIPA |
 | `ddf.png` | Diálogos de Futuro (DDF) |
 | `ascun.png` | ASCUN — Asociación Colombiana de Universidades |
-| `asiesca.png` | ASIESCA |
+| `asiesca.png` | ASIESCA — Asociación de Instituciones de Educación Superior del Caribe |
+| `exe.png` | Fundación Empresarios por la Educación (ExE) |
+| `connect.png` | Connect |
 | `aciet.png` | ACIET — Asociación Colombiana de Instituciones de Educación Superior con Formación Técnica Profesional, Tecnológica y Universitaria |
 
 Recomendación: ancho mínimo 600 px, versión horizontal, sin márgenes excesivos.
