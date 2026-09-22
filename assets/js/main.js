@@ -155,6 +155,10 @@
 
     var datos = recolectar(form);
 
+    if (!endpoint && tipo === "empresas") {
+      enviarRegistro(form, datos, estado, boton);
+      return;
+    }
     if (!endpoint) {
       enviarPorCorreo(form, datos, estado);
       return;
@@ -177,6 +181,71 @@
     }).finally(function () {
       boton.disabled = false;
       boton.textContent = boton.getAttribute("data-texto") || "Enviar inscripción";
+    });
+  }
+
+  /* Inscripción de empresas: crea la cuenta en el portal (API propia). Si la API no
+     está disponible (sitio servido sin funciones), cae al envío por correo. */
+  function enviarRegistro(form, datos, estado, boton) {
+    boton.disabled = true;
+    boton.textContent = "Enviando…";
+    fetch("/api/registro", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify(datos)
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) { j._estado = r.status; return j; });
+    }).then(function (j) {
+      if (j._estado === 201 && j.tokenRegistro) {
+        mostrar(estado, "verde", "<strong>Inscripción recibida.</strong> Ahora cree su clave de acceso al portal.");
+        var panel = document.getElementById("crear-clave");
+        panel.hidden = false;
+        panel.setAttribute("data-token", j.tokenRegistro);
+        document.getElementById("clave-correo").textContent = j.correo;
+        form.querySelectorAll("input, select, textarea, button").forEach(function (el) { el.disabled = true; });
+        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      if (j._estado === 409) {
+        mostrar(estado, "ambar", "<strong>Este correo ya tiene una cuenta.</strong> <a href='portal.html'>Ingrese al portal de empresas</a> con su clave. Si la olvidó, escriba a <a href='mailto:" + CONFIG.CORREO_CONTACTO + "'>" + CONFIG.CORREO_CONTACTO + "</a>.");
+        return;
+      }
+      if (j._estado === 404 || j._estado === 405) { enviarPorCorreo(form, datos, estado); return; }
+      var detalle = j.campos ? " Campos: " + j.campos.join(", ") + "." : "";
+      mostrar(estado, "rojo", "<strong>" + escapar(j.error || "No fue posible enviar la inscripción.") + "</strong>" + escapar(detalle));
+    }).catch(function () {
+      enviarPorCorreo(form, datos, estado);
+    }).then(function () {
+      boton.disabled = false;
+      boton.textContent = boton.getAttribute("data-texto") || "Enviar inscripción";
+    });
+  }
+
+  var formClave = document.getElementById("form-clave");
+  if (formClave) {
+    formClave.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var estado = formClave.querySelector(".formulario__estado");
+      var boton = formClave.querySelector("button[type=submit]");
+      var token = document.getElementById("crear-clave").getAttribute("data-token");
+      var clave = formClave.clave.value, conf = formClave.confirmacion.value;
+      formClave.clave.closest(".campo").classList.toggle("invalido", clave.length < 8);
+      formClave.confirmacion.closest(".campo").classList.toggle("invalido", conf.length < 8 || conf !== clave);
+      if (clave.length < 8) return;
+      if (conf !== clave) { mostrar(estado, "rojo", "La clave y su confirmación no coinciden."); return; }
+      boton.disabled = true; boton.textContent = "Creando…";
+      fetch("/api/clave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ tokenRegistro: token, clave: clave, confirmacion: conf })
+      }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { j._estado = r.status; return j; }); })
+        .then(function (j) {
+          if (j.ok) { window.location.href = "portal.html"; return; }
+          mostrar(estado, "rojo", "<strong>" + escapar(j.error || "No fue posible crear la clave.") + "</strong>");
+        }).catch(function () { mostrar(estado, "rojo", "No fue posible conectar con el servidor. Intente de nuevo."); })
+        .then(function () { boton.disabled = false; boton.textContent = boton.getAttribute("data-texto"); });
     });
   }
 

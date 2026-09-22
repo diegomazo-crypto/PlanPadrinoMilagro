@@ -10,7 +10,8 @@
    diligenciada dirigida a CORREO_CONTACTO.
    ========================================================= */
 window.PPM_CONFIG = {
-  // URL que recibe un POST JSON con la inscripción de empresas.
+  // Inscripción de empresas: vacío = usar el portal propio (/api/registro).
+  // Solo defina una URL si quiere enviar las inscripciones a un servicio externo.
   ENDPOINT_EMPRESAS: "",
 
   // URL que recibe un POST JSON con la inscripción de IES.

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portal de empresas — Plan Padrino Milagro</title>
+  <meta name="description" content="Portal de las empresas inscritas en el Plan Padrino Milagro: aceptación de compromisos y autodiagnóstico de capacidades empresariales.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+<a class="salto" href="#contenido">Ir al contenido</a>
+
+<header class="encabezado">
+  <div class="tricolor" aria-hidden="true"></div>
+  <div class="contenedor encabezado__interior">
+    <a class="marca" href="index.html">
+      <img class="marca__logo" src="assets/img/logo.svg" alt="">
+      <span class="marca__texto">
+        <span class="marca__nombre">Plan Padrino Milagro</span>
+        <span class="marca__sub">Reconstrucción Productiva</span>
+      </span>
+    </a>
+    <button class="nav-toggle" aria-expanded="false" aria-controls="nav-principal" aria-label="Abrir menú">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <nav class="nav" id="nav-principal" aria-label="Principal">
+      <a href="index.html">El Plan</a>
+      <a href="empresas.html">Empresas</a>
+      <a href="ies.html">Instituciones</a>
+      <a href="recursos.html">Recursos</a>
+      <a href="portal.html" aria-current="page">Portal</a>
+      <button class="boton boton--contorno boton--peq" id="boton-salir" type="button" hidden>Cerrar sesión</button>
+    </nav>
+  </div>
+</header>
+
+<main id="contenido" class="portal">
+
+  <!-- ===== CARGANDO ===== -->
+  <section class="seccion" id="vista-cargando">
+    <div class="contenedor contenedor--texto"><p class="entradilla">Cargando su portal…</p></div>
+  </section>
+
+  <!-- ===== INICIO DE SESIÓN ===== -->
+  <section class="seccion seccion--gris" id="vista-login" hidden>
+    <div class="contenedor">
+      <div class="seccion__cabecera seccion__cabecera--centro">
+        <span class="sobretitulo">Portal de empresas</span>
+        <h1 class="portal__titulo">Ingrese con el correo de su interlocutor</h1>
+        <p class="entradilla">Aquí aceptará los compromisos del Plan y diligenciará el autodiagnóstico de capacidades de su empresa. Puede avanzar por pasos y retomarlo cuando quiera.</p>
+      </div>
+      <div class="formulario-envoltura formulario-envoltura--angosta">
+        <form class="formulario" id="form-login" novalidate>
+          <fieldset>
+            <legend>Inicio de sesión</legend>
+            <div class="campos">
+              <div class="campo campo--ancho">
+                <label for="login-correo">Correo electrónico <span class="req">*</span></label>
+                <input type="email" id="login-correo" name="correo" required autocomplete="username">
+                <span class="error">Indique el correo con el que se inscribió.</span>
+              </div>
+              <div class="campo campo--ancho">
+                <label for="login-clave">Clave de acceso <span class="req">*</span></label>
+                <input type="password" id="login-clave" name="clave" required autocomplete="current-password">
+                <span class="error">Indique su clave.</span>
+              </div>
+            </div>
+          </fieldset>
+          <div class="formulario__acciones">
+            <button class="boton boton--primario" type="submit" data-texto="Ingresar">Ingresar</button>
+            <span class="formulario__nota">¿Aún no está inscrito? <a href="empresas.html#inscripcion">Inscriba su empresa</a>.</span>
+          </div>
+          <div class="formulario__estado" aria-live="polite"></div>
+        </form>
+        <p class="portal__ayuda">Si olvidó su clave, escriba a <a href="mailto:padrinomilagro@ceipa.edu.co">padrinomilagro@ceipa.edu.co</a> desde el correo registrado.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ACEPTACIÓN: COMPROMISO Y TÉRMINOS ===== -->
+  <section class="seccion" id="vista-aceptacion" hidden>
+    <div class="contenedor contenedor--texto">
+      <div class="seccion__cabecera">
+        <span class="sobretitulo">Paso 1 de 2 · Antes de comenzar</span>
+        <h1 class="portal__titulo">Compromiso y términos del acompañamiento</h1>
+        <p class="entradilla">Para iniciar el acompañamiento, <strong id="acept-empresa"></strong> debe aceptar dos documentos. Si no los acepta, el proceso termina aquí.</p>
+      </div>
+
+      <ol class="pasos-aceptacion" aria-label="Documentos por aceptar">
+        <li class="pasos-aceptacion__item activo" data-doc="compromiso">1. Compromiso de participación</li>
+        <li class="pasos-aceptacion__item" data-doc="terminos">2. Términos del acompañamiento y confidencialidad</li>
+      </ol>
+
+      <!-- Documento 1 -->
+      <form class="formulario documento" id="form-compromiso" novalidate>
+        <div class="documento__cuerpo">
+          <h2>Compromiso de participación</h2>
+          <p>Al aceptar su vinculación al Plan Padrino Milagro, la empresa reconoce que el éxito del acompañamiento depende de la participación activa de ambas partes y se compromete a:</p>
+          <ol>
+            <li>Designar un único interlocutor responsable, con capacidad para facilitar información y decisiones.</li>
+            <li>Asistir al menos al 80 % de las sesiones acordadas con el equipo universitario y avisar con anticipación cuando exista una imposibilidad real.</li>
+            <li>Entregar información suficiente, oportuna y veraz para realizar el diagnóstico y el seguimiento.</li>
+            <li>Cumplir las tareas y compromisos razonables acordados entre sesiones.</li>
+            <li>Tratar al equipo universitario con respeto y mantener comunicación oportuna.</li>
+            <li>Participar en la medición inicial y final del proceso.</li>
+            <li>No exigir al equipo actividades por fuera del alcance acordado ni servicios profesionales regulados que requieran habilitación específica.</li>
+            <li>Trabajar prioritariamente sobre un frente de intervención y, cuando sea necesario, un segundo frente complementario.</li>
+          </ol>
+          <p>La empresa entiende que el acompañamiento no tiene costo monetario, pero representa una inversión de tiempo, conocimiento y recursos de docentes, estudiantes e instituciones. Ante inasistencias o incumplimientos reiterados se aplicará una ruta gradual: recordatorio, advertencia formal y cierre anticipado del acompañamiento con reasignación del cupo. No se contempla ninguna multa económica.</p>
+        </div>
+        <div class="campo campo--grupo" data-min="1">
+          <label class="opcion opcion--ancha"><input type="checkbox" name="acepta_compromiso" value="si"><span><strong>He leído y acepto el compromiso de participación</strong><small>en nombre de la empresa inscrita.</small></span></label>
+          <span class="error">Marque la casilla para aceptar, o pulse "No acepto".</span>
+        </div>
+        <div class="campos" style="margin-top:14px">
+          <div class="campo campo--ancho">
+            <label for="firma-nombre">Nombre de quien acepta <span class="req">*</span></label>
+            <input type="text" id="firma-nombre" name="nombreFirma" required autocomplete="name">
+            <span class="error">Indique su nombre completo.</span>
+          </div>
+        </div>
+        <div class="formulario__acciones">
+          <button class="boton boton--primario" type="submit" data-texto="Acepto y continúo">Acepto y continúo</button>
+          <button class="boton boton--contorno" type="button" data-declinar="compromiso">No acepto</button>
+        </div>
+        <div class="formulario__estado" aria-live="polite"></div>
+      </form>
+
+      <!-- Documento 2 -->
+      <form class="formulario documento" id="form-terminos" novalidate hidden>
+        <div class="documento__cuerpo">
+          <h2>Términos del acompañamiento y confidencialidad</h2>
+          <h3>1. Naturaleza del acompañamiento</h3>
+          <p>El Plan Padrino Milagro es un proceso estructurado y temporal de acompañamiento técnico, de 8 a 12 semanas, realizado por equipos de estudiantes y docentes de Instituciones de Educación Superior bajo supervisión académica. Produce recomendaciones, herramientas y una Hoja de Ruta de Recuperación y Fortalecimiento a 90–180 días.</p>
+          <h3>2. Lo que el Plan no es</h3>
+          <p>No es un programa de entrega de recursos económicos, subsidios o donaciones; no es una línea de crédito; no es una consultoría integral; no garantiza recuperación económica, incremento de ventas ni resultados financieros específicos; no sustituye servicios profesionales especializados o regulados (jurídicos, contables certificados, de ingeniería, arquitectura, salud mental o seguros).</p>
+          <h3>3. Decisiones empresariales</h3>
+          <p>El equipo acompaña y recomienda. Las decisiones empresariales y su implementación permanecen en cabeza del empresario, quien asume la responsabilidad por ellas.</p>
+          <h3>4. Confidencialidad</h3>
+          <p>La información que la empresa suministre en la inscripción, el autodiagnóstico y las sesiones de trabajo se tratará de manera confidencial. Los equipos y las instituciones participantes se comprometen a usarla únicamente para los fines del acompañamiento y a no divulgarla a terceros. En los reportes consolidados del Plan, la empresa se identifica con un código interno y no con su nombre.</p>
+          <h3>5. Tratamiento de datos personales</h3>
+          <p>Los datos personales se tratan conforme a la Ley 1581 de 2012 y sus normas reglamentarias. La empresa autoriza el uso de información agregada y anonimizada para evaluar el programa y documentar sus aprendizajes. La información se almacena cifrada y solo la secretaría técnica y la IES asignada tienen acceso a ella.</p>
+          <h3>6. Derechos de la empresa</h3>
+          <p>Recibir información clara sobre alcance, duración y responsables; contar con un equipo identificado y supervisado; recibir un trato respetuoso y profesional; conocer los entregables y avances; informar dificultades y solicitar acompañamiento institucional.</p>
+          <h3>7. Terminación</h3>
+          <p>La empresa puede retirarse del Plan en cualquier momento comunicándolo a la secretaría técnica. El Plan puede cerrar anticipadamente el acompañamiento ante incumplimientos reiterados e injustificados, conforme a la ruta gradual descrita en el compromiso de participación.</p>
+        </div>
+        <div class="campo campo--grupo" data-min="1">
+          <label class="opcion opcion--ancha"><input type="checkbox" name="acepta_terminos" value="si"><span><strong>He leído y acepto los términos del acompañamiento y la confidencialidad</strong></span></label>
+          <span class="error">Marque la casilla para aceptar, o pulse "No acepto".</span>
+        </div>
+        <div class="formulario__acciones">
+          <button class="boton boton--primario" type="submit" data-texto="Acepto e inicio el autodiagnóstico">Acepto e inicio el autodiagnóstico</button>
+          <button class="boton boton--contorno" type="button" data-declinar="terminos">No acepto</button>
+        </div>
+        <div class="formulario__estado" aria-live="polite"></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ===== DECLINADO ===== -->
+  <section class="seccion seccion--gris" id="vista-declinado" hidden>
+    <div class="contenedor contenedor--texto" style="text-align:center">
+      <span class="sobretitulo">Proceso finalizado</span>
+      <h1 class="portal__titulo">Gracias por su interés en el Plan Padrino Milagro</h1>
+      <p class="entradilla">Hemos registrado que no acepta las condiciones del acompañamiento, por lo que el proceso termina aquí. Si en el futuro desea reconsiderarlo, escríbanos a <a href="mailto:padrinomilagro@ceipa.edu.co">padrinomilagro@ceipa.edu.co</a>.</p>
+      <a class="boton boton--primario" href="index.html">Volver al inicio</a>
+    </div>
+  </section>
+
+  <!-- ===== AUTODIAGNÓSTICO ===== -->
+  <section class="seccion" id="vista-diagnostico" hidden>
+    <div class="contenedor">
+      <div class="diag__cabecera">
+        <div>
+          <span class="sobretitulo">Paso 2 de 2 · Autodiagnóstico</span>
+          <h1 class="portal__titulo">Madurez de las capacidades empresariales</h1>
+          <p class="entradilla">Empresa: <strong id="diag-empresa"></strong>. Su avance se guarda en cada paso; puede salir y retomar más tarde.</p>
+        </div>
+      </div>
+      <nav class="progreso" aria-label="Avance del autodiagnóstico">
+        <ol id="progreso-lista"></ol>
+        <div class="progreso__barra"><div class="progreso__relleno" id="progreso-relleno"></div></div>
+        <div class="progreso__texto" id="progreso-texto"></div>
+      </nav>
+      <div class="guia" style="margin-top:24px">
+        <aside class="guia__indice diag__escala" aria-label="Escala de madurez">
+          <h3>Escala de madurez</h3>
+          <ol class="escala" id="escala-lista"></ol>
+          <p class="diag__nota">Basada en la escala COBIT®. Responda con evidencia real, no con la intención.</p>
+        </aside>
+        <div class="guia__contenido">
+          <form class="formulario" id="form-diagnostico" novalidate>
+            <div id="diag-contenido"></div>
+            <div class="formulario__acciones diag__acciones">
+              <button class="boton boton--contorno" type="button" id="diag-atras">Atrás</button>
+              <button class="boton boton--primario" type="submit" id="diag-continuar" data-texto="Guardar y continuar">Guardar y continuar</button>
+              <button class="boton boton--contorno" type="button" id="diag-salir">Guardar y salir</button>
+            </div>
+            <div class="formulario__estado" aria-live="polite"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== RESULTADOS ===== -->
+  <section class="seccion" id="vista-resultados" hidden>
+    <div class="contenedor contenedor--texto">
+      <div class="seccion__cabecera">
+        <span class="sobretitulo">Autodiagnóstico completado</span>
+        <h1 class="portal__titulo">Resultados de <span id="res-empresa"></span></h1>
+        <p class="entradilla">Este es el punto de partida del acompañamiento. El equipo universitario asignado lo revisará con usted y lo contrastará con evidencias en la primera sesión.</p>
+      </div>
+      <div id="res-contenido"></div>
+      <div class="formulario__acciones" style="margin-top:28px">
+        <button class="boton boton--primario" type="button" onclick="window.print()">Imprimir o guardar en PDF</button>
+        <a class="boton boton--contorno" href="index.html">Volver al inicio</a>
+      </div>
+      <p class="portal__ayuda">La información de este autodiagnóstico es confidencial y solo la conocen la secretaría técnica y la IES que acompañará a su empresa.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pie">
+  <div class="tricolor" aria-hidden="true"></div>
+  <div class="contenedor">
+    <div class="pie__interior">
+      <div>
+        <a class="marca" href="index.html">
+          <img class="marca__logo" src="assets/img/logo-blanco.svg" alt="">
+          <span class="marca__texto">
+            <span class="marca__nombre">Plan Padrino Milagro</span>
+            <span class="marca__sub">Reconstrucción Productiva</span>
+          </span>
+        </a>
+        <p>Iniciativa del sistema de educación superior colombiano, convocada por la Institución Universitaria CEIPA, ACIET, ASIESCA, ASCUN, Diálogos de Futuro, la Fundación Empresarios por la Educación y Connect. CEIPA ejerce la secretaría técnica inicial.</p>
+      </div>
+      <div>
+        <h4>Navegación</h4>
+        <ul>
+          <li><a href="index.html">El Plan</a></li>
+          <li><a href="empresas.html">Guía para empresas</a></li>
+          <li><a href="ies.html">Guía para IES</a></li>
+          <li><a href="recursos.html">Recursos</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contacto</h4>
+        <ul>
+          <li><a href="mailto:padrinomilagro@ceipa.edu.co">padrinomilagro@ceipa.edu.co</a></li>
+          <li>Secretaría técnica: Institución Universitaria CEIPA, Medellín, Colombia</li>
+        </ul>
+      </div>
+    </div>
+    <div class="pie__legal">
+      © <span data-anio>2026</span> Plan Padrino Milagro para la Reconstrucción Productiva. La información empresarial recibida se trata de manera confidencial y solo para los fines del acompañamiento.
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/instrumento.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/portal.js"></script>
+</body>
+</html>
