@@ -55,6 +55,14 @@
     if (e.estado === "declinado") return mostrar("declinado");
     if (e.estado === "clave_creada" || e.estado === "registrado") {
       $("#acept-empresa").textContent = e.empresa || "su empresa";
+      var yaCompromiso = Boolean(e.aceptaciones && e.aceptaciones.compromiso);
+      $("#form-compromiso").hidden = yaCompromiso;
+      $("#form-terminos").hidden = !yaCompromiso;
+      $(".pasos-aceptacion").hidden = yaCompromiso;
+      if (!yaCompromiso) {
+        $("#acept-titulo").textContent = "Compromiso y términos del acompañamiento";
+        $("#acept-intro").innerHTML = "Para iniciar el acompañamiento, <strong id='acept-empresa'>" + escapar(e.empresa || "su empresa") + "</strong> debe aceptar dos documentos. Si no los acepta, el proceso termina aquí.";
+      }
       return mostrar("aceptacion");
     }
     if (e.estado === "aceptado" || e.estado === "diagnostico_completado") return cargarDiagnostico();
@@ -98,11 +106,12 @@
   $("#form-terminos").addEventListener("submit", function (ev) {
     ev.preventDefault();
     var form = ev.target, est = $(".formulario__estado", form);
-    var ok = form.acepta_terminos.checked;
+    var ok = form.acepta_terminos.checked, nombre = form.nombreFirma.value.trim();
     $(".campo--grupo", form).classList.toggle("invalido", !ok);
-    if (!ok) return;
+    form.nombreFirma.closest(".campo").classList.toggle("invalido", !nombre);
+    if (!ok || !nombre) return;
     ocupado(form, true);
-    api("POST", "/api/aceptacion", { compromiso: true, terminos: true, nombreFirma: estado.nombreFirma || "" })
+    api("POST", "/api/aceptacion", { compromiso: true, terminos: true, nombreFirma: nombre })
       .then(function (r) { estado.empresa = r.empresa; enrutar(); })
       .catch(function (e) { aviso(est, "rojo", escapar(e.error || "No fue posible registrar la aceptación.")); })
       .then(function () { ocupado(form, false); });

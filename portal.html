@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/styles.css?v=20260922c">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260922d">
 </head>
 <body>
 <a class="salto" href="#contenido">Ir al contenido</a>
@@ -87,8 +87,8 @@
     <div class="contenedor contenedor--texto">
       <div class="seccion__cabecera">
         <span class="sobretitulo">Paso 1 de 2 · Antes de comenzar</span>
-        <h1 class="portal__titulo">Compromiso y términos del acompañamiento</h1>
-        <p class="entradilla">Para iniciar el acompañamiento, <strong id="acept-empresa"></strong> debe aceptar dos documentos. Si no los acepta, el proceso termina aquí.</p>
+        <h1 class="portal__titulo" id="acept-titulo">Términos del acompañamiento y confidencialidad</h1>
+        <p class="entradilla" id="acept-intro">El compromiso de participación ya quedó aceptado en la inscripción. Para iniciar, <strong id="acept-empresa"></strong> debe aceptar los términos del acompañamiento y la confidencialidad. Si no los acepta, el proceso termina aquí.</p>
       </div>
 
       <ol class="pasos-aceptacion" aria-label="Documentos por aceptar">
@@ -153,6 +153,13 @@
         <div class="campo campo--grupo" data-min="1">
           <label class="opcion opcion--ancha"><input type="checkbox" name="acepta_terminos" value="si"><span><strong>He leído y acepto los términos del acompañamiento y la confidencialidad</strong></span></label>
           <span class="error">Marque la casilla para aceptar, o pulse "No acepto".</span>
+        </div>
+        <div class="campos" style="margin-top:14px">
+          <div class="campo campo--ancho">
+            <label for="firma-terminos">Nombre de quien acepta <span class="req">*</span></label>
+            <input type="text" id="firma-terminos" name="nombreFirma" required autocomplete="name">
+            <span class="error">Indique su nombre completo.</span>
+          </div>
         </div>
         <div class="formulario__acciones">
           <button class="boton boton--primario" type="submit" data-texto="Acepto e inicio el autodiagnóstico">Acepto e inicio el autodiagnóstico</button>
@@ -265,9 +272,9 @@
   </div>
 </footer>
 
-<script src="assets/js/config.js?v=20260922c"></script>
-<script src="assets/js/instrumento.js?v=20260922c"></script>
-<script src="assets/js/main.js?v=20260922c"></script>
-<script src="assets/js/portal.js?v=20260922c"></script>
+<script src="assets/js/config.js?v=20260922d"></script>
+<script src="assets/js/instrumento.js?v=20260922d"></script>
+<script src="assets/js/main.js?v=20260922d"></script>
+<script src="assets/js/portal.js?v=20260922d"></script>
 </body>
 </html>

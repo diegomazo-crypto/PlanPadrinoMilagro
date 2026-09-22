@@ -16,16 +16,18 @@ module.exports = async function (req, res) {
     }
     const { compromiso, terminos, nombreFirma } = await leerCuerpo(req);
     const ahora = new Date().toISOString();
-    if (compromiso === true && terminos === true) {
-      empresa.aceptaciones = { fecha: ahora, compromiso: true, terminos: true, nombreFirma: String(nombreFirma || "").slice(0, 200), version: "2026-09" };
+    const previas = empresa.aceptaciones || {};
+    const compromisoOk = compromiso === true || previas.compromiso === true;
+    if (compromisoOk && terminos === true) {
+      empresa.aceptaciones = Object.assign({}, previas, { fecha: ahora, compromiso: true, terminos: true, nombreFirma: String(nombreFirma || "").slice(0, 200), version: "2026-09" });
       empresa.estado = "aceptado";
-      empresas.registrarEvento(empresa, "acepta_compromiso_y_terminos");
+      empresas.registrarEvento(empresa, previas.compromiso ? "acepta_terminos" : "acepta_compromiso_y_terminos");
       await empresas.guardar(empresa);
       return responder(res, 200, { ok: true, empresa: empresas.vistaPublica(empresa) });
     }
-    empresa.aceptaciones = { fecha: ahora, compromiso: compromiso === true, terminos: terminos === true, declinado: true, version: "2026-09" };
+    empresa.aceptaciones = Object.assign({}, previas, { fecha: ahora, compromiso: compromisoOk, terminos: terminos === true, declinado: true, version: "2026-09" });
     empresa.estado = "declinado";
-    empresas.registrarEvento(empresa, "declina_" + (compromiso === true ? "terminos" : "compromiso"));
+    empresas.registrarEvento(empresa, "declina_" + (compromisoOk ? "terminos" : "compromiso"));
     await empresas.guardar(empresa);
     cerrarSesion(req, res);
     responder(res, 200, { ok: true, declinado: true });

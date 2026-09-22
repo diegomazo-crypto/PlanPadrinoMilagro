@@ -73,6 +73,14 @@
     form.querySelectorAll(".campo").forEach(function (campo) {
       if (!validarCampo(campo)) valido = false;
     });
+    // Identificación de la empresa (tipo + número con dígito de verificación)
+    var selTipo = form.querySelector("#emp-tipo-id"), inpNit = form.querySelector("#emp-nit");
+    if (selTipo && inpNit && window.PPM_TERRITORIOS && selTipo.value && !inpNit.disabled) {
+      var problema = window.PPM_TERRITORIOS.validarIdentificacion(selTipo.value, inpNit.value);
+      var campo = inpNit.closest(".campo");
+      campo.classList.toggle("invalido", Boolean(problema));
+      if (problema) { document.getElementById("emp-nit-error").textContent = problema; valido = false; }
+    }
     return valido;
   }
 
@@ -86,7 +94,8 @@
       var marcadas = campo.querySelectorAll("input:checked").length;
       if (min > 0 && marcadas < min) ok = false;
     } else {
-      var control = campo.querySelector("input, select, textarea");
+      var control = null;
+      campo.querySelectorAll("input, select, textarea").forEach(function (c) { if (!control && !c.disabled && !c.hidden) control = c; });
       if (control) {
         if (control.type === "checkbox") {
           if (control.required && !control.checked) ok = false;
@@ -120,6 +129,9 @@
     form.querySelectorAll("input[type=checkbox][data-compromiso]").forEach(function (c) {
       datos[c.name] = c.checked ? "sí" : "no";
     });
+    if (datos.municipio === "Otro" || (!datos.municipio && datos.municipio_otro)) datos.municipio = datos.municipio_otro || "";
+    if (datos.camara_nombre === "Otra" || (!datos.camara_nombre && datos.camara_otra)) datos.camara_nombre = datos.camara_otra || "";
+    delete datos.municipio_otro; delete datos.camara_otra;
     datos._formulario = form.getAttribute("data-tipo") || form.id;
     datos._fecha = new Date().toISOString();
     datos._pagina = window.location.href;
@@ -278,6 +290,71 @@
   function escapar(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  /* ---------- Formulario de empresas: listas dependientes y NIT ---------- */
+  var T = window.PPM_TERRITORIOS;
+  var selDepto = document.getElementById("emp-departamento");
+  if (T && selDepto) {
+    var selMun = document.getElementById("emp-municipio"), munOtro = document.getElementById("emp-municipio-otro");
+    var selCam = document.getElementById("emp-camara-nombre"), camOtra = document.getElementById("emp-camara-otra");
+
+    function llenar(select, opciones, primera) {
+      select.innerHTML = "";
+      var o0 = document.createElement("option"); o0.value = ""; o0.textContent = primera; select.appendChild(o0);
+      opciones.forEach(function (t) { var o = document.createElement("option"); o.value = t; o.textContent = t; select.appendChild(o); });
+    }
+
+    function alCambiarDepto() {
+      var d = T.departamento(selDepto.value);
+      if (d) {
+        llenar(selMun, d.municipios.concat([T.OTRO]), "Seleccione el municipio…");
+        selMun.disabled = false; selMun.required = true; selMun.hidden = false;
+        munOtro.hidden = true; munOtro.required = false; munOtro.value = "";
+        llenar(selCam, d.camaras.concat(["Otra", "Ninguna"]), "Seleccione la cámara…");
+        selCam.disabled = false; selCam.hidden = false;
+        camOtra.hidden = true; camOtra.value = "";
+      } else if (selDepto.value === "Otro") {
+        selMun.hidden = true; selMun.disabled = true; selMun.required = false; selMun.value = "";
+        munOtro.hidden = false; munOtro.required = true;
+        selCam.hidden = true; selCam.disabled = true; selCam.value = "";
+        camOtra.hidden = false;
+      } else {
+        llenar(selMun, [], "Seleccione primero el departamento"); selMun.disabled = true; selMun.hidden = false;
+        munOtro.hidden = true; munOtro.required = false;
+        llenar(selCam, [], "Seleccione primero el departamento"); selCam.disabled = true; selCam.hidden = false;
+        camOtra.hidden = true;
+      }
+    }
+    selDepto.addEventListener("change", alCambiarDepto);
+    selMun.addEventListener("change", function () {
+      var otro = selMun.value === T.OTRO;
+      munOtro.hidden = !otro; munOtro.required = otro; if (!otro) munOtro.value = "";
+    });
+    selCam.addEventListener("change", function () {
+      var otra = selCam.value === "Otra";
+      camOtra.hidden = !otra; if (!otra) camOtra.value = "";
+    });
+    alCambiarDepto();
+
+    // Identificación: ayuda y validación según el tipo
+    var selTipo = document.getElementById("emp-tipo-id"), inpNit = document.getElementById("emp-nit");
+    var ayudaNit = document.getElementById("emp-nit-ayuda"), errorNit = document.getElementById("emp-nit-error");
+    function ajustarIdentificacion() {
+      var t = selTipo.value;
+      inpNit.disabled = t === "Sin registro";
+      inpNit.required = t === "NIT" || t === "Cédula de ciudadanía";
+      if (t === "Sin registro") inpNit.value = "";
+      ayudaNit.textContent = t === "NIT" ? "Nueve dígitos y dígito de verificación, por ejemplo 900123456-7." : (t === "Cédula de ciudadanía" ? "Cédula del propietario, solo números." : "NIT con dígito de verificación (900123456-7) o cédula del propietario.");
+    }
+    selTipo.addEventListener("change", ajustarIdentificacion);
+    ajustarIdentificacion();
+    inpNit.addEventListener("blur", function () {
+      var campo = inpNit.closest(".campo");
+      var problema = inpNit.value.trim() ? T.validarIdentificacion(selTipo.value, inpNit.value) : (inpNit.required ? "Indique el número." : null);
+      campo.classList.toggle("invalido", Boolean(problema));
+      errorNit.textContent = problema || "Indique un número válido.";
     });
   }
 

@@ -595,3 +595,6 @@ td ul { margin: 0; padding-left: 1.1em; }
   .res__global { background: #fff; color: #000; border: 1px solid #000; }
   .res__nivel, .res__global .diag__nota, .res__num span { color: #000; }
 }
+
+.compromisos-lista { padding-left: 1.3em; font-size: 0.95rem; color: var(--gris-texto); }
+.compromisos-lista li { margin-bottom: 8px; }
