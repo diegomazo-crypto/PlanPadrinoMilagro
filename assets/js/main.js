@@ -44,7 +44,9 @@
   }
 
   /* ---------- Formularios ---------- */
-  var formularios = document.querySelectorAll("form.formulario");
+  /* Solo los formularios de inscripción (data-tipo) usan el envío genérico.
+     Los del portal y el de creación de clave tienen su propia lógica. */
+  var formularios = document.querySelectorAll("form.formulario[data-tipo]");
   formularios.forEach(function (form) {
     form.setAttribute("novalidate", "novalidate");
     form.addEventListener("submit", function (e) {
@@ -255,6 +257,7 @@
     var url = "mailto:" + CONFIG.CORREO_CONTACTO +
       "?subject=" + encodeURIComponent(asunto) +
       "&body=" + encodeURIComponent(cuerpo + "\n\n(Enviado desde " + window.location.href + ")");
+    window.PPM_ULTIMO_MAILTO = url; // registro para pruebas automáticas
     window.location.href = url;
     mostrar(estado, "info",
       "<strong>Se abrió su cliente de correo con la inscripción diligenciada.</strong> Revise el mensaje y pulse enviar. " +
