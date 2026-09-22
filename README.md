@@ -28,9 +28,20 @@ afectadas por el terremoto del 10 de agosto de 2026.
 └── docs/                   PDFs descargables (ver docs/README.md)
 ```
 
-No requiere proceso de construcción ni dependencias. El flujo `.github/workflows/pages.yml` publica el
-sitio en GitHub Pages en cada cambio a `main`; también puede servirse desde cualquier servidor de archivos
-estáticos.
+No requiere proceso de construcción ni dependencias. Puede servirse desde cualquier alojamiento de
+archivos estáticos.
+
+## Publicación en Vercel
+
+El repositorio incluye `vercel.json` (URLs limpias, cabeceras de seguridad y caché de recursos).
+Para publicar:
+
+1. Entrar a [vercel.com](https://vercel.com) con la cuenta de GitHub e importar este repositorio.
+2. En la configuración del proyecto dejar *Framework Preset* en **Other**, sin comando de compilación y
+   con el directorio de salida vacío (raíz del repositorio).
+3. Desplegar. Cada cambio en `main` publica una nueva versión; cada pull request genera una vista previa.
+4. Para el dominio propio, agregarlo en *Settings → Domains* del proyecto y crear en el registrador los
+   registros DNS que Vercel indique (por lo general un registro A para el dominio raíz y un CNAME para `www`).
 
 ## Formularios de inscripción
 
