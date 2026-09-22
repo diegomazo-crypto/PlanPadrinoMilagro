@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/styles.css?v=20260922c">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260922d">
 </head>
 <body>
 <a class="salto" href="#contenido">Ir al contenido</a>
@@ -260,9 +260,20 @@
                 <span class="error">Indique el nombre de la empresa.</span>
               </div>
               <div class="campo">
-                <label for="emp-nit">NIT o documento del propietario</label>
-                <input type="text" id="emp-nit" name="nit" inputmode="numeric">
-                <span class="ayuda">Opcional. Ayuda a cruzar con la información de las cámaras de comercio.</span>
+                <label for="emp-tipo-id">Tipo de identificación <span class="req">*</span></label>
+                <select id="emp-tipo-id" name="tipo_identificacion" required>
+                  <option value="">Seleccione…</option>
+                  <option>NIT</option>
+                  <option>Cédula de ciudadanía</option>
+                  <option>Sin registro</option>
+                </select>
+                <span class="error">Seleccione el tipo de identificación.</span>
+              </div>
+              <div class="campo">
+                <label for="emp-nit">Número de identificación <span class="req">*</span></label>
+                <input type="text" id="emp-nit" name="nit" inputmode="numeric" placeholder="Ej.: 900123456-7">
+                <span class="ayuda" id="emp-nit-ayuda">NIT con dígito de verificación (900123456-7) o cédula del propietario.</span>
+                <span class="error" id="emp-nit-error">Indique un número válido.</span>
               </div>
               <div class="campo">
                 <label for="emp-tamano">Tamaño de la empresa <span class="req">*</span></label>
@@ -298,7 +309,10 @@
               </div>
               <div class="campo">
                 <label for="emp-municipio">Municipio <span class="req">*</span></label>
-                <input type="text" id="emp-municipio" name="municipio" required autocomplete="address-level2">
+                <select id="emp-municipio" name="municipio" required disabled>
+                  <option value="">Seleccione primero el departamento</option>
+                </select>
+                <input type="text" id="emp-municipio-otro" name="municipio_otro" placeholder="Escriba el municipio" hidden autocomplete="address-level2">
                 <span class="error">Indique el municipio.</span>
               </div>
               <div class="campo campo--ancho">
@@ -316,8 +330,11 @@
                 </select>
               </div>
               <div class="campo">
-                <label for="emp-camara-nombre">Cámara de comercio (si aplica)</label>
-                <input type="text" id="emp-camara-nombre" name="camara_nombre" placeholder="Ej.: Cámara de Comercio de Pereira">
+                <label for="emp-camara-nombre">Cámara de comercio</label>
+                <select id="emp-camara-nombre" name="camara_nombre" disabled>
+                  <option value="">Seleccione primero el departamento</option>
+                </select>
+                <input type="text" id="emp-camara-otra" name="camara_otra" placeholder="Escriba el nombre de la cámara" hidden>
               </div>
             </div>
           </fieldset>
@@ -441,25 +458,27 @@
           </fieldset>
 
           <fieldset>
-            <legend>Compromisos de participación</legend>
-            <p>Lea y marque cada compromiso. Son las reglas de juego del Plan.</p>
-            <div class="campo campo--grupo" data-min="7">
-            <ul class="compromisos">
-              <li><label><input type="checkbox" name="c_tiempo" required data-compromiso> Tengo disposición real para participar en un proceso de acompañamiento de 8 a 12 semanas y asistiré al menos al 80 % de las sesiones acordadas.</label></li>
-              <li><label><input type="checkbox" name="c_informacion" required data-compromiso> Entregaré información suficiente, oportuna y veraz para el diagnóstico y el seguimiento.</label></li>
-              <li><label><input type="checkbox" name="c_frente" required data-compromiso> Acepto trabajar prioritariamente sobre un frente de intervención y, cuando sea necesario, un segundo frente complementario.</label></li>
-              <li><label><input type="checkbox" name="c_medicion" required data-compromiso> Participaré en la medición inicial y final y autorizo el uso de información agregada y anonimizada para evaluar el programa.</label></li>
-              <li><label><input type="checkbox" name="c_alcance" required data-compromiso> Entiendo que el Plan no entrega recursos económicos, no es un crédito ni garantiza resultados, y que las decisiones empresariales permanecen en mi cabeza.</label></li>
-              <li><label><input type="checkbox" name="c_incumplimiento" required data-compromiso> Entiendo que los incumplimientos reiterados e injustificados pueden dar lugar al cierre anticipado del acompañamiento y a la reasignación del cupo.</label></li>
-              <li><label><input type="checkbox" name="c_datos" required data-compromiso> Autorizo el tratamiento de los datos aquí consignados para los fines del Plan Padrino Milagro, conforme a la Ley 1581 de 2012 y la política de tratamiento de datos de las instituciones participantes.</label></li>
-            </ul>
-            <span class="error">Debe aceptar todos los compromisos para continuar.</span>
+            <legend>Compromiso de participación</legend>
+            <p>Al inscribirse, la empresa se compromete a lo siguiente. Léalo con atención: el portal no volverá a pedirle este compromiso.</p>
+            <ol class="compromisos-lista">
+              <li>Participar en un proceso de acompañamiento de 8 a 12 semanas y asistir al menos al 80 % de las sesiones acordadas, avisando con anticipación cuando exista una imposibilidad real.</li>
+              <li>Designar un único interlocutor responsable, con capacidad para facilitar información y decisiones.</li>
+              <li>Entregar información suficiente, oportuna y veraz para el diagnóstico y el seguimiento, y cumplir las tareas acordadas entre sesiones.</li>
+              <li>Trabajar prioritariamente sobre un frente de intervención y, cuando sea necesario, un segundo frente complementario.</li>
+              <li>Tratar al equipo universitario con respeto y no exigirle actividades fuera del alcance ni servicios profesionales regulados.</li>
+              <li>Participar en la medición inicial y final, y autorizar el uso de información agregada y anonimizada para evaluar el programa.</li>
+              <li>Entender que el Plan no entrega recursos económicos, no es un crédito ni garantiza resultados, y que las decisiones empresariales permanecen en cabeza del empresario.</li>
+              <li>Entender que los incumplimientos reiterados e injustificados pueden dar lugar al cierre anticipado del acompañamiento y a la reasignación del cupo, sin multas económicas.</li>
+            </ol>
+            <div class="campo campo--grupo" data-min="1">
+              <label class="opcion opcion--ancha"><input type="checkbox" name="acepta_compromisos" value="sí"><span><strong>He leído y acepto el compromiso de participación</strong><small>en nombre de la empresa, y autorizo el tratamiento de los datos aquí consignados para los fines del Plan Padrino Milagro, conforme a la Ley 1581 de 2012.</small></span></label>
+              <span class="error">Debe aceptar el compromiso de participación para inscribirse.</span>
             </div>
           </fieldset>
 
           <div class="formulario__acciones">
             <button class="boton boton--primario" type="submit" data-texto="Enviar inscripción">Enviar inscripción</button>
-            <span class="formulario__nota">En el siguiente paso creará su clave de acceso al portal.</span>
+            <span class="formulario__nota">En el siguiente paso creará su clave de acceso al portal, donde solo faltará aceptar los términos de confidencialidad.</span>
           </div>
           <div class="formulario__estado" aria-live="polite"></div>
         </form>
@@ -536,7 +555,8 @@
   </div>
 </footer>
 
-<script src="assets/js/config.js?v=20260922c"></script>
-<script src="assets/js/main.js?v=20260922c"></script>
+<script src="assets/js/config.js?v=20260922d"></script>
+<script src="assets/js/territorios.js?v=20260922d"></script>
+<script src="assets/js/main.js?v=20260922d"></script>
 </body>
 </html>
