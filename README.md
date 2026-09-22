@@ -57,3 +57,20 @@ información diligenciada dirigida a `CORREO_CONTACTO`, de modo que el sitio fun
 python3 -m http.server 8080
 # abrir http://localhost:8080
 ```
+
+## Identidad visual
+
+El sitio aplica el *Manual de Identidad Visual v1* del Plan (logo "Sol de la Reconstrucción", septiembre 2026):
+
+| Elemento | Valor |
+|---|---|
+| Amarillo Sol (acento) | `#FCD116` |
+| Azul Institucional (enlaces, botón primario) | `#003893` |
+| Rojo Bandera (acentos, alertas, etiquetas) | `#CE1126` |
+| Azul Marino (texto, íconos, fondos oscuros) | `#14213D` |
+| Gris Texto | `#5B6472` |
+| Fondo Claro / Borde | `#F4F5F7` / `#E4E6EA` |
+| Tipografía | Manrope 800 (H1), 700 (H2, botones, etiquetas), 500 (cuerpo) |
+
+Logos en `assets/img/`: `logo.svg` (uso principal), `logo-blanco.svg` (fondos oscuros),
+`logo-uncolor.svg` (impresión a un color) y `favicon.svg` (sol y brote).
