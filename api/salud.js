@@ -7,8 +7,8 @@ const almacen = require("../lib/almacen");
 
 module.exports = async function (req, res) {
   if (!soloMetodos(req, res, ["GET"])) return;
-  const variablesToken = Object.keys(process.env).filter((k) => /READ_WRITE_TOKEN$/i.test(k));
-  const salida = { ok: true, configuracion: estadoConfiguracion(), blobToken: almacen.USAR_BLOB ? "definido (" + almacen.TOKEN_BLOB.nombre + ")" : "ausente", variablesTokenPresentes: variablesToken };
+  const variablesBlob = Object.keys(process.env).filter((k) => /BLOB|STORE_ID|READ_WRITE_TOKEN|OIDC/i.test(k)).sort();
+  const salida = { ok: true, configuracion: estadoConfiguracion(), blob: almacen.USAR_BLOB ? "credenciales " + almacen.CREDENCIALES.modo + " (" + almacen.CREDENCIALES.variable + ")" : "sin credenciales", variablesRelacionadasConBlob: variablesBlob };
   try {
     salida.almacenamiento = await almacen.verificar();
   } catch (e) {
