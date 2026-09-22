@@ -172,17 +172,32 @@ python3 -m http.server 8080
 
 ## Identidad visual
 
-El sitio aplica el *Manual de Identidad Visual v1* del Plan (logo "Sol de la Reconstrucción", septiembre 2026):
+El sitio aplica el **Manual de Marca v2** (septiembre 2026). La denominación institucional sigue siendo
+*Plan Padrino Milagro*; la marca visual de uso público es *Plan Milagro* y el descriptor «Para reconstrucción
+productiva» forma parte del lockup.
 
 | Elemento | Valor |
 |---|---|
-| Amarillo Sol (acento) | `#FCD116` |
-| Azul Institucional (enlaces, botón primario) | `#003893` |
-| Rojo Bandera (acentos, alertas, etiquetas) | `#CE1126` |
-| Azul Marino (texto, íconos, fondos oscuros) | `#14213D` |
-| Gris Texto | `#5B6472` |
-| Fondo Claro / Borde | `#F4F5F7` / `#E4E6EA` |
-| Tipografía | Manrope 800 (H1), 700 (H2, botones, etiquetas), 500 (cuerpo) |
+| Azul profundo (dominante: texto, botón primario, pie) | `#08366A` |
+| Amarillo dorado (acento principal; nunca como texto sobre blanco) | `#E9A619` |
+| Rojo institucional (acento puntual: etiquetas, cifras, llamados a la acción) | `#E3141E` |
+| Gris claro (fondos, reglas, bordes; nunca texto) | `#C2C3C7` |
+| Texto secundario (contraste AA) | `#4C5A6E` |
+| Fondo claro / Borde | `#F4F6F9` / `#DCDEE2` |
+| Titulares, botones y etiquetas | Archivo 600–800 (sustitutos: Arial Black, Helvetica Neue Bold) |
+| Texto corrido | Source Sans 3 400–600 (sustitutos: Calibri, Segoe UI) |
+| Barra de marca | azul · amarillo · rojo · gris |
 
-Logos en `assets/img/`: `logo.svg` (uso principal), `logo-blanco.svg` (fondos oscuros),
-`logo-uncolor.svg` (impresión a un color) y `favicon.svg` (sol y brote).
+Logos en `assets/img/` (nomenclatura del manual; versiones raster derivadas del JPG de propuesta mientras
+se recibe el vectorial):
+
+| Archivo | Uso |
+|---|---|
+| `PlanMilagro_Logo_Horizontal_Color_v2_202609.png` | Lockup horizontal a color: encabezado e imagen social. Mínimo 160 px de ancho. |
+| `PlanMilagro_Simbolo_Color_v2_202609.png` | Símbolo aislado: favicon, avatares. Mínimo 32 px. |
+| `PlanMilagro_Logo_Mono_Azul_v2_202609.png` | Monocromático azul (impresión a una tinta). |
+| `PlanMilagro_Logo_Mono_Blanco_v2_202609.png` | Calado en blanco: pie de página sobre azul profundo. |
+| `favicon.png`, `apple-touch-icon.png` | Símbolo con 12 % de margen. |
+
+Mensajes del manual usados en el sitio: «Oportunidades que siembran más futuros» (portada) y «Juntos
+reconstruimos más» (cierre del pie).
