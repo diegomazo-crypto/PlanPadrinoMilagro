@@ -15,5 +15,9 @@ module.exports = async function (req, res) {
     salida.almacenamiento = { error: String((e && e.message) || e).slice(0, 300) };
   }
   if (salida.configuracion.claveCifrado === "ausente" || salida.configuracion.claveCifrado === "demasiado corta") salida.ok = false;
+  if (process.env.VERCEL && !process.env.BLOB_READ_WRITE_TOKEN) {
+    salida.ok = false;
+    salida.accion = "Conecte el almacén Blob al proyecto (Storage → almacén → Connect Project, marcando Production, Preview y Development) y vuelva a desplegar.";
+  }
   responder(res, salida.ok ? 200 : 500, salida);
 };
