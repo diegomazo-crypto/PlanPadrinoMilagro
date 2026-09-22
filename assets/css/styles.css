@@ -402,7 +402,7 @@ td ul { margin: 0; padding-left: 1.1em; }
 .opcion input { margin-top: 4px; accent-color: var(--azul); flex: none; }
 .opcion--ancha { grid-column: 1 / -1; }
 .opcion strong { display: block; color: var(--marino); }
-.opcion small { color: var(--gris-500); }
+.opcion small { display: block; color: var(--gris-500); font-weight: 400; }
 .campo--grupo.invalido .opcion { border-color: var(--rojo); }
 
 .compromisos { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
@@ -598,3 +598,53 @@ td ul { margin: 0; padding-left: 1.1em; }
 
 .compromisos-lista { padding-left: 1.3em; font-size: 0.95rem; color: var(--gris-texto); }
 .compromisos-lista li { margin-bottom: 8px; }
+
+/* El atributo hidden debe ganar a cualquier display de las clases de rejilla */
+[hidden] { display: none !important; }
+
+/* ---------- Búsqueda en el padrón de IES ---------- */
+.autocompletar { position: relative; }
+.sugerencias {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 30; list-style: none; margin: 4px 0 0; padding: 6px;
+  background: #fff; border: 1px solid var(--gris-300); border-radius: var(--radio-sm); box-shadow: var(--sombra);
+  max-height: 320px; overflow: auto;
+}
+.sugerencias li { padding: 10px 12px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.sugerencias li strong { color: var(--marino); font-size: 0.97rem; }
+.sugerencias li small { color: var(--gris-500); }
+.sugerencias li:hover, .sugerencias li.activa { background: var(--azul-050); }
+.sugerencias__vacio { color: var(--gris-500); cursor: default; }
+.ies-ficha {
+  display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; background: var(--verde-100); border: 1px solid #B5DCC6;
+  border-radius: var(--radio-sm); font-size: 0.95rem; color: var(--gris-texto);
+}
+.ies-ficha strong { color: var(--verde); }
+
+/* ---------- Portal de instituciones: grupos ---------- */
+.panel-ies { display: grid; gap: 24px; }
+.panel-ies__cabecera { background: #fff; border: 1px solid var(--borde); border-radius: 16px; padding: clamp(20px, 3vw, 28px); box-shadow: var(--sombra-sm); display: grid; gap: 6px; }
+.panel-ies__cabecera h1 { font-size: clamp(1.4rem, 2.6vw, 1.9rem); margin: 0; }
+.panel-ies__meta { color: var(--gris-500); font-size: 0.95rem; }
+.panel-ies__acciones { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 8px; }
+.grupos { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.grupo { background: #fff; border: 1px solid var(--borde); border-radius: 14px; padding: 18px; box-shadow: var(--sombra-sm); display: flex; flex-direction: column; gap: 10px; }
+.grupo__cabecera { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.grupo__cabecera h3 { margin: 0; font-size: 1.1rem; }
+.grupo__estado { font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--fondo-claro); color: var(--gris-texto); white-space: nowrap; }
+.grupo__estado--disponible { background: var(--verde-100); color: var(--verde); }
+.grupo__estado--asignado { background: var(--azul-050); color: var(--azul); }
+.grupo__campo { font-weight: 700; color: var(--marino); }
+.grupo dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: 0.92rem; }
+.grupo dt { color: var(--gris-500); }
+.grupo dd { margin: 0; }
+.grupo__miembros { margin: 0; padding-left: 1.1em; font-size: 0.9rem; color: var(--gris-texto); }
+.grupo__acciones { display: flex; gap: 8px; margin-top: auto; padding-top: 8px; }
+.grupos__vacio { grid-column: 1 / -1; text-align: center; padding: 32px; background: var(--fondo-claro); border-radius: 14px; color: var(--gris-texto); }
+.miembros { display: grid; gap: 10px; }
+.miembro { display: grid; grid-template-columns: 1.4fr 1fr 1fr .6fr 1.3fr 1fr auto; gap: 8px; align-items: end; padding: 10px; background: var(--fondo-claro); border-radius: var(--radio-sm); }
+.miembro label { font-size: 0.78rem; font-weight: 700; color: var(--gris-500); display: block; margin-bottom: 3px; }
+.miembro input, .miembro select { font: inherit; font-size: 0.92rem; padding: 8px 10px; border: 1px solid var(--gris-300); border-radius: 8px; width: 100%; background: #fff; }
+.miembro.invalido input:placeholder-shown, .miembro.invalido input[name="m_nombre"] { border-color: var(--rojo); }
+.miembro__quitar { background: none; border: 1px solid var(--gris-300); border-radius: 8px; padding: 8px 10px; cursor: pointer; color: var(--rojo); font-weight: 700; }
+@media (max-width: 900px) { .miembro { grid-template-columns: 1fr 1fr; } .miembro__quitar { grid-column: 1 / -1; } }
+.formulario-envoltura--grupo { max-width: 1040px; }

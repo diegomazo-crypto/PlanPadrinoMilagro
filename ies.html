@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/styles.css?v=20260922d">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260922e">
 </head>
 <body>
 <a class="salto" href="#contenido">Ir al contenido</a>
@@ -64,6 +64,7 @@
         <div class="hero__acciones">
           <a class="boton boton--primario" href="#inscripcion">Ir al formulario de vinculación</a>
           <a class="boton boton--contorno" href="#objetivo">Leer la guía</a>
+          <a class="boton boton--contorno" href="portal-ies.html">Portal de instituciones</a>
         </div>
       </div>
     </div>
@@ -222,7 +223,7 @@
       <div class="seccion__cabecera seccion__cabecera--centro">
         <span class="sobretitulo">Vinculación institucional</span>
         <h2>Formulario de inscripción para Instituciones de Educación Superior</h2>
-        <p class="entradilla">Debe diligenciarlo el responsable académico designado por la institución. Los campos marcados con <span style="color:var(--rojo)">*</span> son obligatorios.</p>
+        <p class="entradilla">Debe diligenciarlo el <strong>responsable designado</strong> por la institución: será el usuario del portal de instituciones y quien cree, edite y elimine los grupos que apadrinarán empresas. Los campos marcados con <span style="color:var(--rojo)">*</span> son obligatorios.</p>
       </div>
 
       <div class="formulario-envoltura">
@@ -230,43 +231,72 @@
           <input class="trampa" type="text" name="_trampa" tabindex="-1" autocomplete="off" aria-hidden="true">
 
           <fieldset>
-            <legend>Institución</legend>
-            <p>Datos de la Institución de Educación Superior que se vincula.</p>
+            <legend>Paso 1. Institución</legend>
+            <p>Busque su institución en el padrón de IES activas del SNIES (Ministerio de Educación Nacional). Si no aparece, marque la casilla y declárela manualmente.</p>
             <div class="campos">
+              <div class="campo campo--ancho autocompletar" id="campo-ies-buscar">
+                <label for="ies-buscar">Institución de Educación Superior <span class="req">*</span></label>
+                <input type="text" id="ies-buscar" name="institucion_busqueda" autocomplete="off" placeholder="Escriba parte del nombre, por ejemplo: Tecnológica de Pereira" role="combobox" aria-expanded="false" aria-controls="ies-sugerencias" aria-autocomplete="list">
+                <ul class="sugerencias" id="ies-sugerencias" role="listbox" hidden></ul>
+                <input type="hidden" id="ies-clave" name="institucion_clave">
+                <input type="hidden" id="ies-nombre" name="institucion">
+                <span class="ayuda" id="ies-padron-nota">Cargando el padrón de instituciones…</span>
+                <span class="error">Seleccione la institución de la lista o marque "Mi institución no aparece".</span>
+              </div>
+              <div class="campo campo--ancho" id="ies-seleccionada" hidden>
+                <div class="ies-ficha" id="ies-ficha"></div>
+              </div>
+              <div class="campo campo--ancho campo--grupo" data-min="0">
+                <label class="opcion opcion--ancha"><input type="checkbox" id="ies-manual" name="institucion_manual" value="sí"><span>Mi institución no aparece en la lista<small>Declararé sus datos manualmente; la secretaría técnica los verificará contra el SNIES.</small></span></label>
+              </div>
+            </div>
+            <div class="campos" id="ies-manual-campos" hidden style="margin-top:16px">
               <div class="campo campo--ancho">
-                <label for="ies-nombre">Nombre de la institución <span class="req">*</span></label>
-                <input type="text" id="ies-nombre" name="institucion" required autocomplete="organization">
+                <label for="ies-nombre-manual">Nombre de la institución <span class="req">*</span></label>
+                <input type="text" id="ies-nombre-manual" name="institucion_nombre_manual" autocomplete="organization">
                 <span class="error">Indique el nombre de la institución.</span>
               </div>
               <div class="campo">
+                <label for="ies-codigo-manual">Código SNIES (si lo conoce)</label>
+                <input type="text" id="ies-codigo-manual" name="institucion_codigo" inputmode="numeric" pattern="[0-9]{1,6}">
+                <span class="error">Solo números.</span>
+              </div>
+              <div class="campo">
                 <label for="ies-caracter">Carácter académico <span class="req">*</span></label>
-                <select id="ies-caracter" name="caracter" required>
+                <select id="ies-caracter" name="caracter">
                   <option value="">Seleccione…</option>
                   <option>Universidad</option>
-                  <option>Institución universitaria o escuela tecnológica</option>
+                  <option>Institución universitaria / Escuela tecnológica</option>
                   <option>Institución tecnológica</option>
                   <option>Institución técnica profesional</option>
                 </select>
                 <span class="error">Seleccione el carácter académico.</span>
               </div>
               <div class="campo">
-                <label for="ies-naturaleza">Naturaleza</label>
+                <label for="ies-naturaleza">Sector</label>
                 <select id="ies-naturaleza" name="naturaleza">
                   <option value="">Seleccione…</option>
                   <option>Privada</option>
-                  <option>Pública</option>
+                  <option>Oficial</option>
                 </select>
               </div>
               <div class="campo">
+                <label for="ies-departamento">Departamento de la sede principal <span class="req">*</span></label>
+                <input type="text" id="ies-departamento" name="departamento">
+                <span class="error">Indique el departamento.</span>
+              </div>
+              <div class="campo">
                 <label for="ies-ciudad">Ciudad sede principal <span class="req">*</span></label>
-                <input type="text" id="ies-ciudad" name="ciudad" required>
+                <input type="text" id="ies-ciudad" name="ciudad">
                 <span class="error">Indique la ciudad.</span>
               </div>
+            </div>
+            <div class="campos" style="margin-top:16px">
               <div class="campo">
                 <label for="ies-sedes">Sedes en las zonas afectadas</label>
                 <input type="text" id="ies-sedes" name="sedes_zona" placeholder="Ej.: Pereira, Armenia. Deje vacío si no tiene.">
               </div>
-              <div class="campo campo--ancho">
+              <div class="campo">
                 <label for="ies-web">Sitio web</label>
                 <input type="url" id="ies-web" name="sitio_web" placeholder="https://">
                 <span class="error">Indique una URL válida que comience con http:// o https://.</span>
@@ -284,8 +314,8 @@
           </fieldset>
 
           <fieldset>
-            <legend>Responsable académico</legend>
-            <p>Persona designada por la institución para coordinar la participación y la supervisión de los equipos.</p>
+            <legend>Paso 2. Responsable designado por la institución</legend>
+            <p>Persona designada por la institución para coordinar la participación, supervisar los equipos y administrar los grupos en el portal. <strong>Su correo institucional será el usuario de la cuenta.</strong> Cada institución tiene un único responsable.</p>
             <div class="campos">
               <div class="campo">
                 <label for="ies-resp-nombre">Nombre completo <span class="req">*</span></label>
@@ -298,7 +328,7 @@
                 <span class="error">Indique el cargo.</span>
               </div>
               <div class="campo">
-                <label for="ies-resp-email">Correo institucional <span class="req">*</span></label>
+                <label for="ies-resp-email">Correo institucional (será su usuario) <span class="req">*</span></label>
                 <input type="email" id="ies-resp-email" name="responsable_correo" required autocomplete="email">
                 <span class="error">Indique un correo electrónico válido.</span>
               </div>
@@ -315,7 +345,7 @@
           </fieldset>
 
           <fieldset>
-            <legend>Capacidad de acompañamiento</legend>
+            <legend>Paso 3. Capacidad de acompañamiento</legend>
             <p>Estimaciones para planear el emparejamiento de la primera cohorte. No son compromisos definitivos.</p>
             <div class="campos">
               <div class="campo">
@@ -384,7 +414,7 @@
           </fieldset>
 
           <fieldset>
-            <legend>Mecanismo académico</legend>
+            <legend>Paso 4. Mecanismo académico</legend>
             <p>Figura que respaldará la participación de los estudiantes. Puede estar por definir en esta etapa.</p>
             <div class="campo campo--grupo" data-min="1">
               <span class="campo__titulo" style="font-weight:700;font-size:.95rem;display:block;margin-bottom:8px">Figuras previstas <span class="req">*</span></span>
@@ -412,25 +442,55 @@
           </fieldset>
 
           <fieldset>
-            <legend>Compromisos institucionales</legend>
-            <p>Lea y marque cada compromiso.</p>
-            <div class="campo campo--grupo" data-min="7">
-            <ul class="compromisos">
-              <li><label><input type="checkbox" name="c_supervision" required data-compromiso> La institución designará un responsable académico y garantizará supervisión efectiva de cada equipo.</label></li>
-              <li><label><input type="checkbox" name="c_mecanismo" required data-compromiso> Antes de vincular estudiantes, definiremos el mecanismo académico que respaldará su participación y los incentivos y consecuencias aplicables.</label></li>
-              <li><label><input type="checkbox" name="c_continuidad" required data-compromiso> Ante el retiro de un estudiante o equipo, procuraremos la continuidad del acompañamiento sin trasladar el costo del incumplimiento al empresario.</label></li>
-              <li><label><input type="checkbox" name="c_metodologia" required data-compromiso> Aplicaremos la metodología común del Plan y reportaremos avances bajo el formato común de reporte.</label></li>
-              <li><label><input type="checkbox" name="c_confidencialidad" required data-compromiso> Protegeremos la confidencialidad de la información empresarial y acompañaremos sin convertir la tragedia en vitrina institucional.</label></li>
-              <li><label><input type="checkbox" name="c_gratuidad" required data-compromiso> Entendemos que el acompañamiento es gratuito y no genera contraprestación alguna para la institución.</label></li>
-              <li><label><input type="checkbox" name="c_datos" required data-compromiso> Autorizo el tratamiento de los datos aquí consignados para los fines del Plan Padrino Milagro, conforme a la Ley 1581 de 2012.</label></li>
-            </ul>
-            <span class="error">Debe aceptar todos los compromisos para continuar.</span>
+            <legend>Paso 5. Compromisos institucionales</legend>
+            <p>Lea los compromisos que asume la institución y acéptelos en bloque. No se le volverán a pedir en el portal.</p>
+            <ol class="compromisos-lista">
+              <li>La institución designa un responsable y garantiza supervisión efectiva de cada equipo.</li>
+              <li>Antes de vincular estudiantes, definirá el mecanismo académico que respalde su participación y los incentivos y consecuencias aplicables.</li>
+              <li>Ante el retiro de un estudiante o equipo, procurará la continuidad del acompañamiento sin trasladar el costo del incumplimiento al empresario.</li>
+              <li>Aplicará la metodología común del Plan y reportará avances bajo el formato común de reporte.</li>
+              <li>Protegerá la confidencialidad de la información empresarial y acompañará sin convertir la tragedia en vitrina institucional.</li>
+              <li>Entiende que el acompañamiento es gratuito y no genera contraprestación alguna para la institución.</li>
+            </ol>
+            <div class="campo campo--grupo" data-min="1">
+              <label class="opcion opcion--ancha"><input type="checkbox" name="acepta_compromisos" value="sí"><span><strong>He leído y acepto los compromisos institucionales</strong><small>en nombre de la institución que represento, y autorizo el tratamiento de los datos aquí consignados para los fines del Plan Padrino Milagro, conforme a la Ley 1581 de 2012.</small></span></label>
+              <span class="error">Debe aceptar los compromisos institucionales para vincular a la institución.</span>
             </div>
           </fieldset>
 
           <div class="formulario__acciones">
             <button class="boton boton--primario" type="submit" data-texto="Enviar vinculación">Enviar vinculación</button>
-            <span class="formulario__nota">La secretaría técnica confirmará la recepción y convocará a la siguiente sesión de trabajo.</span>
+            <span class="formulario__nota">Al enviar, creará la clave de acceso al portal de instituciones. ¿Ya tiene cuenta? <a href="portal-ies.html">Ingrese al portal</a>.</span>
+          </div>
+          <div class="formulario__estado" aria-live="polite"></div>
+        </form>
+      </div>
+
+      <div class="formulario-envoltura formulario-envoltura--angosta" id="crear-clave" hidden style="margin-top:28px">
+        <form class="formulario" id="form-clave" novalidate>
+          <fieldset>
+            <legend>Paso 6. Cree su clave de acceso</legend>
+            <p>Su usuario será el correo del responsable: <strong id="clave-correo"></strong>. Con esta clave ingresará al portal de instituciones para crear y administrar los grupos que apadrinarán empresas.</p>
+            <ul class="clave-reglas">
+              <li>Mínimo 8 caracteres, con letras y números.</li>
+              <li>No puede ser ni contener ningún dato que suministró en la inscripción: nombre de la institución, del responsable, teléfono o correo.</li>
+              <li>Guárdela en un lugar seguro. No la comparta con los equipos.</li>
+            </ul>
+            <div class="campos">
+              <div class="campo">
+                <label for="clave-nueva">Clave <span class="req">*</span></label>
+                <input type="password" id="clave-nueva" name="clave" required minlength="8" autocomplete="new-password">
+                <span class="error">Indique una clave de al menos 8 caracteres.</span>
+              </div>
+              <div class="campo">
+                <label for="clave-confirmacion">Confirme la clave <span class="req">*</span></label>
+                <input type="password" id="clave-confirmacion" name="confirmacion" required minlength="8" autocomplete="new-password">
+                <span class="error">Repita la clave.</span>
+              </div>
+            </div>
+          </fieldset>
+          <div class="formulario__acciones">
+            <button class="boton boton--primario" type="submit" data-texto="Crear clave e ingresar al portal">Crear clave e ingresar al portal</button>
           </div>
           <div class="formulario__estado" aria-live="polite"></div>
         </form>
@@ -477,7 +537,8 @@
   </div>
 </footer>
 
-<script src="assets/js/config.js?v=20260922d"></script>
-<script src="assets/js/main.js?v=20260922d"></script>
+<script src="assets/js/config.js?v=20260922e"></script>
+<script src="assets/js/ies-snies.js?v=20260922e"></script>
+<script src="assets/js/main.js?v=20260922e"></script>
 </body>
 </html>

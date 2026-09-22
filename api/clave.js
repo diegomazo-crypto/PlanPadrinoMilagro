@@ -1,9 +1,10 @@
 "use strict";
-/* POST /api/clave — establece la clave de acceso tras el registro.
+/* POST /api/clave — establece la clave de acceso tras el registro (empresas e IES).
    La clave no puede coincidir con ningún dato suministrado en la inscripción. */
 const { responder, error, leerCuerpo, soloMetodos, iniciarSesion } = require("../lib/http");
 const { verificarToken, hashClave } = require("../lib/cifrado");
 const empresas = require("../lib/empresas");
+const ies = require("../lib/ies");
 
 function normal(s) { return String(s || "").trim().toLowerCase().replace(/\s+/g, " "); }
 
@@ -16,7 +17,12 @@ function validarClave(clave, confirmacion, empresa) {
   const c = normal(clave);
   const sinTildes = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const cPlano = sinTildes(c);
-  const valores = Object.values(empresa.datos || {}).filter((v) => typeof v === "string").map(normal).filter(Boolean);
+  const fuente = Object.assign({}, empresa.datos || {}, empresa.institucion || {});
+  const valores = [];
+  Object.values(fuente).forEach((v) => {
+    if (typeof v === "string") valores.push(normal(v));
+    else if (Array.isArray(v)) v.forEach((x) => { if (typeof x === "string") valores.push(normal(x)); });
+  });
   const correo = normal(empresa.correo);
   valores.push(correo, correo.split("@")[0]);
   const fragmentos = new Set();
@@ -40,19 +46,22 @@ module.exports = async function (req, res) {
     const { tokenRegistro, clave, confirmacion } = await leerCuerpo(req);
     const carga = verificarToken(tokenRegistro, "registro");
     if (!carga) return error(res, 401, "El enlace de creación de clave expiró. Vuelva a diligenciar la inscripción.");
-    const empresa = await empresas.cargarPorId(carga.id);
-    if (!empresa) return error(res, 404, "No se encontró la inscripción.");
-    if (empresa.clave) return error(res, 409, "Esta cuenta ya tiene clave. Inicie sesión en el portal.");
+    const esIes = carga.t === "ies";
+    const modulo = esIes ? ies : empresas;
+    const cuenta = await modulo.cargarPorId(carga.id);
+    if (!cuenta) return error(res, 404, "No se encontró la inscripción.");
+    if (cuenta.clave) return error(res, 409, "Esta cuenta ya tiene clave. Inicie sesión en el portal.");
 
-    const problema = validarClave(clave, confirmacion, empresa);
+    const problema = validarClave(clave, confirmacion, cuenta);
     if (problema) return error(res, 400, problema);
 
-    empresa.clave = hashClave(clave);
-    empresa.estado = "clave_creada";
-    empresas.registrarEvento(empresa, "clave_creada");
-    await empresas.guardar(empresa);
-    iniciarSesion(req, res, empresa.id);
-    responder(res, 200, { ok: true, empresa: empresas.vistaPublica(empresa) });
+    cuenta.clave = hashClave(clave);
+    cuenta.estado = "clave_creada";
+    modulo.registrarEvento(cuenta, "clave_creada");
+    await modulo.guardar(cuenta);
+    iniciarSesion(req, res, cuenta.id, esIes ? "ies" : "empresa");
+    const vista = modulo.vistaPublica(cuenta);
+    responder(res, 200, esIes ? { ok: true, tipo: "ies", ies: vista } : { ok: true, tipo: "empresa", empresa: vista });
   } catch (e) {
     console.error("clave:", e);
     error(res, 500, "No fue posible guardar la clave. Intente de nuevo.");
