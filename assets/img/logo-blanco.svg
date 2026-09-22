@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Plan Padrino Milagro — Sol de la Reconstrucción">
+  <line x1="114" y1="70" x2="132" y2="70" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+  <line x1="104" y1="94" x2="117" y2="107" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+  <line x1="80" y1="104" x2="80" y2="122" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+  <line x1="56" y1="94" x2="43" y2="107" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+  <line x1="46" y1="70" x2="28" y2="70" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+  <line x1="56" y1="46" x2="43" y2="33" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+  <line x1="80" y1="36" x2="80" y2="18" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+  <line x1="104" y1="46" x2="117" y2="33" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="80" cy="70" r="27" fill="#ffffff"/>
+  <path d="M80,100 C65,95 60,80 70,72 C78,85 80,95 80,100 Z" fill="#14213D"/>
+  <path d="M80,100 C95,95 100,80 90,72 C82,85 80,95 80,100 Z" fill="#14213D"/>
+  <line x1="80" y1="100" x2="80" y2="128" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+</svg>
