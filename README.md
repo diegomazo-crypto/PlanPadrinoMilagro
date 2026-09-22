@@ -28,8 +28,9 @@ afectadas por el terremoto del 10 de agosto de 2026.
 └── docs/                   PDFs descargables (ver docs/README.md)
 ```
 
-No requiere proceso de construcción ni dependencias. Puede publicarse directamente en GitHub Pages
-(rama principal, carpeta raíz) o en cualquier servidor de archivos estáticos.
+No requiere proceso de construcción ni dependencias. El flujo `.github/workflows/pages.yml` publica el
+sitio en GitHub Pages en cada cambio a `main`; también puede servirse desde cualquier servidor de archivos
+estáticos.
 
 ## Formularios de inscripción
 
