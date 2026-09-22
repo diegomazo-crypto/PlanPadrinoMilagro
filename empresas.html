@@ -43,6 +43,7 @@
       <a href="empresas.html" aria-current="page">Empresas</a>
       <a href="ies.html">Instituciones</a>
       <a href="recursos.html">Recursos</a>
+      <a href="portal.html">Portal</a>
       <a class="boton boton--primario boton--peq" href="#inscripcion">Inscribir mi empresa</a>
     </nav>
   </div>
@@ -242,7 +243,7 @@
       <div class="seccion__cabecera seccion__cabecera--centro">
         <span class="sobretitulo">Inscripción</span>
         <h2>Formulario de inscripción para empresas</h2>
-        <p class="entradilla">Diligencie la información de su empresa. Toma cerca de cinco minutos. Los campos marcados con <span style="color:var(--rojo)">*</span> son obligatorios.</p>
+        <p class="entradilla">Diligencie la información de su empresa. Toma cerca de cinco minutos. Al enviarla creará su cuenta en el <a href="portal.html">portal de empresas</a>, donde aceptará los compromisos y hará el autodiagnóstico. Los campos marcados con <span style="color:var(--rojo)">*</span> son obligatorios.</p>
       </div>
 
       <div class="formulario-envoltura">
@@ -458,7 +459,37 @@
 
           <div class="formulario__acciones">
             <button class="boton boton--primario" type="submit" data-texto="Enviar inscripción">Enviar inscripción</button>
-            <span class="formulario__nota">La secretaría técnica confirmará la recepción por correo electrónico.</span>
+            <span class="formulario__nota">En el siguiente paso creará su clave de acceso al portal.</span>
+          </div>
+          <div class="formulario__estado" aria-live="polite"></div>
+        </form>
+      </div>
+
+      <div class="formulario-envoltura formulario-envoltura--angosta" id="crear-clave" hidden style="margin-top:28px">
+        <form class="formulario" id="form-clave" novalidate>
+          <fieldset>
+            <legend>Paso 2. Cree su clave de acceso</legend>
+            <p>Su usuario será el correo del interlocutor: <strong id="clave-correo"></strong>. Con esta clave ingresará al portal para aceptar los compromisos y diligenciar el autodiagnóstico.</p>
+            <ul class="clave-reglas">
+              <li>Mínimo 8 caracteres, con letras y números.</li>
+              <li>No puede ser ni contener ningún dato que suministró en la inscripción: nombre de la empresa, NIT, nombre del interlocutor, teléfono o correo.</li>
+              <li>Guárdela en un lugar seguro. No la comparta con el equipo universitario.</li>
+            </ul>
+            <div class="campos">
+              <div class="campo">
+                <label for="clave-nueva">Clave <span class="req">*</span></label>
+                <input type="password" id="clave-nueva" name="clave" required minlength="8" autocomplete="new-password">
+                <span class="error">Indique una clave de al menos 8 caracteres.</span>
+              </div>
+              <div class="campo">
+                <label for="clave-confirmacion">Confirme la clave <span class="req">*</span></label>
+                <input type="password" id="clave-confirmacion" name="confirmacion" required minlength="8" autocomplete="new-password">
+                <span class="error">Repita la clave.</span>
+              </div>
+            </div>
+          </fieldset>
+          <div class="formulario__acciones">
+            <button class="boton boton--primario" type="submit" data-texto="Crear clave e ingresar al portal">Crear clave e ingresar al portal</button>
           </div>
           <div class="formulario__estado" aria-live="polite"></div>
         </form>

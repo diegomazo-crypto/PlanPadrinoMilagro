@@ -1,0 +1,13 @@
+{
+  "name": "plan-padrino-milagro",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sitio y portal del Plan Padrino Milagro para la Reconstrucción Productiva",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "node scripts/servidor-local.js"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.8.0"
+  }
+}
