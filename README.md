@@ -59,12 +59,18 @@ Ninguna empresa puede ver datos de otra: cada solicitud opera solo sobre el regi
 
 | Variable | Cómo obtenerla | Uso |
 |---|---|---|
-| `BLOB_READ_WRITE_TOKEN` | Se crea sola al conectar un almacén Blob al proyecto (Storage → Create → Blob). | Guardar y leer los archivos cifrados. |
+| `BLOB_STORE_ID` o `BLOB_READ_WRITE_TOKEN` | Se crean solas al conectar un almacén Blob al proyecto (Storage → almacén → Connect Project). Las conexiones recientes usan la identidad del proyecto y solo definen `BLOB_STORE_ID`; el código admite ambos mecanismos. | Guardar y leer los archivos cifrados. |
 | `PPM_CLAVE_CIFRADO` | `openssl rand -hex 32` (64 caracteres hexadecimales). | Clave de cifrado de los registros. **Si se pierde, los datos no se pueden recuperar.** Guárdela en un gestor de secretos. |
 | `PPM_SECRETO_SESION` | `openssl rand -hex 32`. | Firma de las cookies de sesión. |
 | `PPM_CLAVE_ADMIN` | Una contraseña larga (mínimo 12 caracteres). | Autoriza la exportación de datos para la secretaría técnica. |
 
 Después de definirlas hay que **redesplegar** el proyecto para que las funciones las tomen.
+
+### Diagnóstico
+
+`GET /api/salud` informa, sin revelar valores, si cada variable está definida, qué credenciales de Blob
+encontró y si una prueba real de escritura y lectura cifrada funcionó. Es lo primero que conviene abrir
+cuando la inscripción falla en producción.
 
 ### Exportar los datos (secretaría técnica)
 
