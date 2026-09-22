@@ -31,15 +31,12 @@ afectadas por el terremoto del 10 de agosto de 2026.
 No requiere proceso de construcción ni dependencias. Puede servirse desde cualquier alojamiento de
 archivos estáticos.
 
-## Publicación en GitHub Pages
+## Publicación en Vercel
 
-El flujo `.github/workflows/pages.yml` publica la raíz del repositorio en GitHub Pages en cada cambio a
-`main`. Requiere que el repositorio sea público (o un plan de pago de GitHub).
-
-## Publicación en Vercel (alternativa)
+El sitio se publica en Vercel desde la rama `main`: https://plan-padrino-milagro.vercel.app
 
 El repositorio incluye `vercel.json` (URLs limpias, cabeceras de seguridad y caché de recursos).
-Para publicar:
+Para reproducir la configuración en otra cuenta:
 
 1. Entrar a [vercel.com](https://vercel.com) con la cuenta de GitHub e importar este repositorio.
 2. En la configuración del proyecto dejar *Framework Preset* en **Other**, sin comando de compilación y
