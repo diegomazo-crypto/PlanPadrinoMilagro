@@ -7,7 +7,8 @@ const almacen = require("../lib/almacen");
 
 module.exports = async function (req, res) {
   if (!soloMetodos(req, res, ["GET"])) return;
-  const salida = { ok: true, configuracion: estadoConfiguracion(), blobToken: Boolean(process.env.BLOB_READ_WRITE_TOKEN) ? "definido" : "ausente" };
+  const variablesToken = Object.keys(process.env).filter((k) => /READ_WRITE_TOKEN$/i.test(k));
+  const salida = { ok: true, configuracion: estadoConfiguracion(), blobToken: almacen.USAR_BLOB ? "definido (" + almacen.TOKEN_BLOB.nombre + ")" : "ausente", variablesTokenPresentes: variablesToken };
   try {
     salida.almacenamiento = await almacen.verificar();
   } catch (e) {
@@ -15,7 +16,7 @@ module.exports = async function (req, res) {
     salida.almacenamiento = { error: String((e && e.message) || e).slice(0, 300) };
   }
   if (salida.configuracion.claveCifrado === "ausente" || salida.configuracion.claveCifrado === "demasiado corta") salida.ok = false;
-  if (process.env.VERCEL && !process.env.BLOB_READ_WRITE_TOKEN) {
+  if (process.env.VERCEL && !almacen.USAR_BLOB) {
     salida.ok = false;
     salida.accion = "Conecte el almacén Blob al proyecto (Storage → almacén → Connect Project, marcando Production, Preview y Development) y vuelva a desplegar.";
   }
