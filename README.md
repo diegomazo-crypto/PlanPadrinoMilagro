@@ -24,9 +24,9 @@ afectadas por el terremoto del 10 de agosto de 2026.
 ├── recursos.html
 ├── portal.html
 ├── portal-ies.html
-├── api/                    Funciones de servidor (Vercel): registro, clave, sesion, aceptacion, diagnostico, exportar,
-│                           ies-padron, ies-registro, grupos
-├── lib/                    Cifrado, almacenamiento, sesión y acceso a los registros (empresas e IES)
+├── api/                    Funciones de servidor (Vercel): registro, clave, sesion, aceptacion, diagnostico, informe,
+│                           exportar, ies-padron, ies-registro, grupos
+├── lib/                    Cifrado, almacenamiento, sesión, registros (empresas e IES), correo e informe PDF
 ├── assets/
 │   ├── css/styles.css      Hoja de estilos
 │   ├── js/config.js        Configuración (endpoint del formulario de IES, correo)
@@ -98,6 +98,45 @@ node scripts/actualizar-padron-ies.js exportacion-snies.csv
 ```
 
 La respuesta de `/api/ies-padron` indica en `fuente` cuál de las tres se está usando.
+
+## Correos automáticos e informe de autodiagnóstico
+
+El portal envía dos correos desde el buzón del Plan (`planpadrinomilagro@ceipa.edu.co`):
+
+1. **Confirmación de cuenta**, al crear la clave (empresas e IES): usuario, enlace al portal y próximos pasos.
+2. **Informe de autodiagnóstico**, al finalizar el diagnóstico: correo a la empresa con el informe en PDF
+   adjunto y copia al buzón del Plan, para compartirlo con la IES madrina.
+
+El informe (modelo CRL: resultado global, capacidades, factor por factor con observaciones y datos de
+desempeño) se archiva cifrado en `informes/<id>.json` y se puede descargar:
+
+```
+/api/informe                          → la empresa, con su sesión (botón "Descargar el informe" en el portal)
+/api/informe?id=<id>&clave=<admin>    → la secretaría técnica, cualquier empresa (el id aparece en /api/exportar)
+POST /api/informe                     → la empresa reenvía el informe a su correo
+```
+
+Si el correo falla, el flujo no se interrumpe: el informe queda archivado, el portal lo indica y el intento
+se registra en el historial de la empresa (`correos`). `GET /api/salud` muestra el modo de correo activo.
+
+### Configurar el buzón (Microsoft 365)
+
+| Variable | Valor |
+|---|---|
+| `PPM_CORREO_USUARIO` | `planpadrinomilagro@ceipa.edu.co` |
+| `PPM_CORREO_CLAVE` | Contraseña del buzón (o contraseña de aplicación si tiene MFA). |
+| `PPM_CORREO_SERVIDOR` / `PPM_CORREO_PUERTO` | Opcionales; por defecto `smtp.office365.com` y `587` (STARTTLS). |
+| `PPM_CORREO_REMITENTE` | Opcional; por defecto `Plan Milagro <planpadrinomilagro@ceipa.edu.co>`. |
+| `PPM_CORREO_COPIA` | Opcional; buzón que recibe copia del informe. Por defecto el mismo buzón del Plan; vacío para no copiar. |
+| `PPM_URL_SITIO` | Opcional; enlace usado en los correos (por defecto `https://www.planpadrinomilagro.co`). |
+
+Requisitos en Microsoft 365: el buzón debe tener habilitado **SMTP autenticado** (Centro de administración de
+Exchange → Buzones → el buzón → Administrar aplicaciones de correo → *SMTP autenticado*) y la organización
+debe permitir la autenticación básica para SMTP. Si la política de seguridad lo bloquea, la alternativa es un
+registro de aplicación en Entra ID con permiso `Mail.Send` (Microsoft Graph); avise para adaptar el envío.
+
+Sin credenciales, en desarrollo local los correos se guardan como archivos en `.datos-local/correos/`; en
+Vercel se marcan como no enviados sin afectar el flujo.
 
 ### Variables de entorno en Vercel (Settings → Environment Variables)
 

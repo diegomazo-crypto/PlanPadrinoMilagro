@@ -18,5 +18,5 @@ window.PPM_CONFIG = {
   ENDPOINT_IES: "",
 
   // Correo de la secretaría técnica del Plan.
-  CORREO_CONTACTO: "padrinomilagro@ceipa.edu.co"
+  CORREO_CONTACTO: "planpadrinomilagro@ceipa.edu.co"
 };

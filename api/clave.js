@@ -5,6 +5,7 @@ const { responder, error, leerCuerpo, soloMetodos, iniciarSesion } = require("..
 const { verificarToken, hashClave } = require("../lib/cifrado");
 const empresas = require("../lib/empresas");
 const ies = require("../lib/ies");
+const correo = require("../lib/correo");
 
 function normal(s) { return String(s || "").trim().toLowerCase().replace(/\s+/g, " "); }
 
@@ -58,6 +59,12 @@ module.exports = async function (req, res) {
     cuenta.clave = hashClave(clave);
     cuenta.estado = "clave_creada";
     modulo.registrarEvento(cuenta, "clave_creada");
+    // Correo de confirmación de la cuenta (no bloquea el flujo si falla)
+    const mensaje = esIes ? correo.confirmacionCuentaIes(cuenta) : correo.confirmacionCuentaEmpresa(cuenta);
+    const envio = await correo.enviar({ para: cuenta.correo, asunto: mensaje.asunto, html: mensaje.html, copia: "" });
+    cuenta.correos = cuenta.correos || [];
+    cuenta.correos.push({ tipo: "confirmacion_cuenta", fecha: envio.fecha, estado: envio.ok ? "enviado" : "fallido", modo: envio.modo, error: envio.error });
+    modulo.registrarEvento(cuenta, envio.ok ? "correo_confirmacion_enviado" : "correo_confirmacion_fallido");
     await modulo.guardar(cuenta);
     iniciarSesion(req, res, cuenta.id, esIes ? "ies" : "empresa");
     const vista = modulo.vistaPublica(cuenta);

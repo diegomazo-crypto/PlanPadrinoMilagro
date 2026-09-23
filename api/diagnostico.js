@@ -4,6 +4,8 @@
 const { responder, error, leerCuerpo, soloMetodos, sesionActual } = require("../lib/http");
 const empresas = require("../lib/empresas");
 const instrumento = require("../assets/js/instrumento.js");
+const informe = require("../lib/informe");
+const correo = require("../lib/correo");
 
 const CODIGOS = new Set();
 instrumento.CAPACIDADES.forEach((c) => c.factores.forEach((f) => CODIGOS.add(f.codigo)));
@@ -26,6 +28,28 @@ function limpiarNumero(v, permiteNegativo) {
   if (isNaN(n)) return null;
   if (!permiteNegativo && n < 0) return null;
   return n;
+}
+
+async function generarYEnviarInforme(empresa) {
+  const resumen = { generado: null, nombre: null, correo: null };
+  let pdf;
+  try {
+    pdf = await informe.generarPdf(empresa);
+    Object.assign(resumen, await informe.guardarInforme(empresa, pdf));
+    empresas.registrarEvento(empresa, "informe_generado");
+  } catch (e) {
+    console.error("informe:", e);
+    resumen.error = "No fue posible generar el informe: " + String((e && e.message) || e).slice(0, 160);
+    empresas.registrarEvento(empresa, "informe_fallido");
+    return resumen;
+  }
+  const mensaje = correo.informeDiagnostico(empresa, empresa.diagnostico.resultados);
+  const envio = await correo.enviar({ para: empresa.correo, asunto: mensaje.asunto, html: mensaje.html, adjuntos: [{ nombre: resumen.nombre, contenido: pdf, tipo: "application/pdf" }] });
+  resumen.correo = { para: empresa.correo, copia: correo.configuracion().copia || null, fecha: envio.fecha, estado: envio.ok ? "enviado" : "fallido", modo: envio.modo, error: envio.error };
+  empresa.correos = empresa.correos || [];
+  empresa.correos.push(Object.assign({ tipo: "informe_diagnostico" }, resumen.correo));
+  empresas.registrarEvento(empresa, envio.ok ? "informe_enviado" : "informe_correo_fallido");
+  return resumen;
 }
 
 module.exports = async function (req, res) {
@@ -92,6 +116,11 @@ module.exports = async function (req, res) {
     d.paso = PASOS_MAX;
     empresa.estado = "diagnostico_completado";
     empresas.registrarEvento(empresa, "diagnostico_finalizado");
+    await empresas.guardar(empresa);
+
+    // Informe en PDF: se archiva cifrado (para la secretaría y la IES madrina) y se envía por correo.
+    // Ninguno de los dos pasos bloquea la finalización.
+    empresa.informe = await generarYEnviarInforme(empresa);
     await empresas.guardar(empresa);
     responder(res, 200, { ok: true, diagnostico: d, empresa: empresas.vistaPublica(empresa) });
   } catch (e) {

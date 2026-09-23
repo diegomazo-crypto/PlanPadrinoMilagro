@@ -72,7 +72,7 @@ module.exports = async function (req, res) {
     if (url.searchParams.get("formato") === "csv") {
       const cab = ["correo", "empresa", "nit", "tamano", "sector", "departamento", "municipio", "estado_operativo", "frente_prioritario",
         "contacto_nombre", "contacto_telefono", "estado", "registro", "aceptacion", "diagnostico_completado", "paso",
-        "organizacional", "financiera", "marketing", "innovacion", "gerencial", "global", "nivel_global"];
+        "organizacional", "financiera", "marketing", "innovacion", "gerencial", "global", "nivel_global", "informe_generado", "informe_correo"];
       const filas = [cab.join(",")];
       limpias.forEach((e) => {
         const d = e.datos || {}, r = (e.diagnostico && e.diagnostico.resultados) || null;
@@ -81,7 +81,7 @@ module.exports = async function (req, res) {
           d.contacto_nombre, d.contacto_telefono, e.estado, e.creado, e.aceptaciones && e.aceptaciones.fecha,
           e.diagnostico && e.diagnostico.completado ? "sí" : "no", e.diagnostico && e.diagnostico.paso,
           cap("organizacional"), cap("financiera"), cap("marketing"), cap("innovacion"), cap("gerencial"),
-          r ? r.global : "", r ? r.nivelGlobal : ""].map(csvCelda).join(","));
+          r ? r.global : "", r ? r.nivelGlobal : "", e.informe && e.informe.generado, e.informe && e.informe.correo && e.informe.correo.estado].map(csvCelda).join(","));
       });
       res.statusCode = 200;
       res.setHeader("Content-Type", "text/csv; charset=utf-8");

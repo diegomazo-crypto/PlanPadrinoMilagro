@@ -4,11 +4,12 @@
 const { responder, soloMetodos } = require("../lib/http");
 const { estadoConfiguracion } = require("../lib/cifrado");
 const almacen = require("../lib/almacen");
+const correo = require("../lib/correo");
 
 module.exports = async function (req, res) {
   if (!soloMetodos(req, res, ["GET"])) return;
   const variablesBlob = Object.keys(process.env).filter((k) => /BLOB|STORE_ID|READ_WRITE_TOKEN|OIDC/i.test(k)).sort();
-  const salida = { ok: true, configuracion: estadoConfiguracion(), blob: almacen.USAR_BLOB ? "credenciales " + almacen.CREDENCIALES.modo + " (" + almacen.CREDENCIALES.variable + ")" : "sin credenciales", variablesRelacionadasConBlob: variablesBlob };
+  const salida = { ok: true, configuracion: estadoConfiguracion(), blob: almacen.USAR_BLOB ? "credenciales " + almacen.CREDENCIALES.modo + " (" + almacen.CREDENCIALES.variable + ")" : "sin credenciales", variablesRelacionadasConBlob: variablesBlob, correo: correo.estado() };
   try {
     salida.almacenamiento = await almacen.verificar();
   } catch (e) {
