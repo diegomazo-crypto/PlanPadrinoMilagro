@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Portal de instituciones — Plan Padrino Milagro</title>
-  <meta name="description" content="Portal de las Instituciones de Educación Superior vinculadas al Plan Padrino Milagro: administración de los grupos que apadrinan empresas.">
+  <title>Área de trabajo del grupo — Plan Padrino Milagro</title>
+  <meta name="description" content="Área de trabajo de los grupos que apadrinan empresas en el Plan Padrino Milagro (Plan Milagro).">
   <meta name="robots" content="noindex">
   <link rel="icon" href="assets/img/favicon.png?v=20260923c" type="image/png" sizes="64x64">
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20260923c">
@@ -30,7 +30,7 @@
       <a href="empresas.html">Empresas</a>
       <a href="ies.html">Instituciones</a>
       <a href="recursos.html">Recursos</a>
-      <a href="portal-ies.html" aria-current="page">Portal IES</a>
+      <a href="portal-grupo.html" aria-current="page">Mi grupo</a>
       <button class="boton boton--contorno boton--peq" id="boton-salir" type="button" hidden>Cerrar sesión</button>
     </nav>
   </div>
@@ -45,9 +45,9 @@
   <section class="seccion seccion--gris" id="vista-login" hidden>
     <div class="contenedor">
       <div class="seccion__cabecera seccion__cabecera--centro">
-        <span class="sobretitulo">Portal de instituciones</span>
-        <h1 class="portal__titulo">Ingrese con el correo del coordinador</h1>
-        <p class="entradilla">Tablero de control de los grupos que apadrinan: cuántos se han registrado, cuántas personas participan y qué falta para confirmarlos. Puede editar la información, cambiar integrantes, confirmar o cancelar grupos.</p>
+        <span class="sobretitulo">Área de trabajo del grupo</span>
+        <h1 class="portal__titulo">Ingrese con el correo del líder del grupo</h1>
+        <p class="entradilla">Aquí verá quién ha confirmado su participación, podrá reenviar invitaciones, ajustar los integrantes y, más adelante, seguir el acompañamiento a la empresa asignada.</p>
       </div>
       <div class="formulario-envoltura formulario-envoltura--angosta">
         <form class="formulario" id="form-login" novalidate>
@@ -55,9 +55,9 @@
             <legend>Inicio de sesión</legend>
             <div class="campos">
               <div class="campo campo--ancho">
-                <label for="login-correo">Correo institucional <span class="req">*</span></label>
+                <label for="login-correo">Correo del líder <span class="req">*</span></label>
                 <input type="email" id="login-correo" name="correo" required autocomplete="username">
-                <span class="error">Indique el correo con el que vinculó a la institución.</span>
+                <span class="error">Indique el correo con el que registró el grupo.</span>
               </div>
               <div class="campo campo--ancho">
                 <label for="login-clave">Clave de acceso <span class="req">*</span></label>
@@ -68,11 +68,11 @@
           </fieldset>
           <div class="formulario__acciones">
             <button class="boton boton--primario" type="submit" data-texto="Ingresar">Ingresar</button>
-            <span class="formulario__nota">¿Aún no vinculó a su institución? <a href="ies.html#inscripcion">Diligencie el formulario de vinculación</a>.</span>
+            <span class="formulario__nota">¿Aún no registró su grupo? <a href="grupos.html#registro">Regístrelo aquí</a>.</span>
           </div>
           <div class="formulario__estado" aria-live="polite"></div>
         </form>
-        <p class="portal__ayuda">¿Lidera un grupo? <a href="portal-grupo.html">Ingrese al área de trabajo del grupo</a>. ¿Es una empresa? <a href="portal.html">Portal de empresas</a>. Si olvidó su clave, escriba a <a href="mailto:planpadrinomilagro@ceipa.edu.co">planpadrinomilagro@ceipa.edu.co</a>.</p>
+        <p class="portal__ayuda">¿Es coordinador de una IES? <a href="portal-ies.html">Ingrese al portal de instituciones</a>. Si olvidó su clave, escriba a <a href="mailto:planpadrinomilagro@ceipa.edu.co">planpadrinomilagro@ceipa.edu.co</a> desde el correo registrado.</p>
       </div>
     </div>
   </section>
@@ -80,40 +80,25 @@
   <section class="seccion seccion--gris" id="vista-panel" hidden>
     <div class="contenedor panel-ies">
       <div class="panel-ies__cabecera">
-        <span class="sobretitulo">Tablero de control</span>
-        <h1 id="panel-ies-nombre"></h1>
-        <p class="panel-ies__meta" id="panel-ies-meta"></p>
-        <p class="panel-ies__meta" id="panel-responsable"></p>
+        <span class="sobretitulo">Área de trabajo del grupo</span>
+        <h1 id="pg-nombre"></h1>
+        <p class="panel-ies__meta" id="pg-meta"></p>
+        <p id="pg-estado"></p>
         <div class="panel-ies__acciones">
-          <a class="boton boton--primario" href="grupos.html#registro">Registrar un grupo</a>
-          <span class="formulario__nota">Los líderes registran sus grupos en el formulario público; aquí usted los revisa y confirma.</span>
+          <button class="boton boton--primario" type="button" id="pg-editar">Editar el grupo</button>
+          <span class="formulario__nota" id="pg-resumen"></span>
         </div>
       </div>
-
-      <div class="tablero" id="tablero"></div>
-
-      <div class="panel-ies__filtros">
-        <label for="filtro-estado">Mostrar:</label>
-        <select id="filtro-estado">
-          <option value="activos">Grupos activos</option>
-          <option value="registrado">Esperando confirmación de integrantes</option>
-          <option value="integrantes_confirmados">Listos para confirmar</option>
-          <option value="confirmado">Confirmados</option>
-          <option value="asignado">Asignados a una empresa</option>
-          <option value="cancelado">Cancelados</option>
-          <option value="todos">Todos</option>
-        </select>
-      </div>
-      <div id="lista-grupos" class="grupos" aria-live="polite"></div>
+      <div class="grupo" id="pg-detalle"></div>
+      <div class="formulario__estado" id="pg-aviso" aria-live="polite"></div>
     </div>
   </section>
 
-  <section class="seccion" id="vista-grupo" hidden>
+  <section class="seccion" id="vista-editar" hidden>
     <div class="contenedor">
       <div class="seccion__cabecera">
-        <span class="sobretitulo">Tablero de control</span>
-        <h1 class="portal__titulo" id="grupo-titulo">Editar el grupo</h1>
-        <p class="entradilla">Puede corregir la información, cambiar integrantes (los nuevos reciben invitación) o retirar a quien no pueda participar.</p>
+        <span class="sobretitulo">Área de trabajo del grupo</span>
+        <h1 class="portal__titulo">Editar el grupo</h1>
       </div>
       <div class="formulario-envoltura formulario-envoltura--grupo">
         <form class="formulario" id="form-grupo" novalidate>
@@ -192,6 +177,6 @@
 
 <script src="assets/js/catalogo-grupos.js?v=20260923c"></script>
 <script src="assets/js/grupo-editor.js?v=20260923c"></script>
-<script src="assets/js/portal-ies.js?v=20260923c"></script>
+<script src="assets/js/portal-grupo.js?v=20260923c"></script>
 </body>
 </html>

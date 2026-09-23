@@ -309,8 +309,29 @@
       r.capacidades.map(function (c) { return "<tr><td>" + escapar(c.nombre) + "</td><td>" + c.ponderado.toFixed(2) + "</td><td>" + c.promedio.toFixed(2) + "</td><td>" + escapar(c.nivel) + "</td></tr>"; }).join("") +
       "</tbody></table></div>";
     $("#res-contenido").innerHTML = html;
+    pintarInforme();
     mostrar("resultados");
   }
+
+  function pintarInforme() {
+    var inf = estado.empresa && estado.empresa.informe, cont = $("#res-informe");
+    if (!inf) { aviso(cont, "info", "El informe en PDF se genera al descargarlo con el botón de abajo."); return; }
+    if (inf.error) { aviso(cont, "ambar", escapar(inf.error) + " Puede intentar descargarlo de nuevo."); return; }
+    if (inf.correo && inf.correo.estado === "enviado") {
+      aviso(cont, "verde", "<strong>Informe archivado y enviado a " + escapar(inf.correo.para) + ".</strong> La secretaría técnica recibió copia para compartirlo con la institución que apadrinará a su empresa.");
+    } else {
+      aviso(cont, "ambar", "<strong>El informe quedó archivado, pero no fue posible enviarlo por correo.</strong> Descárguelo con el botón de abajo o intente reenviarlo.");
+    }
+  }
+
+  $("#res-reenviar").addEventListener("click", function () {
+    var b = $("#res-reenviar"), cont = $("#res-informe");
+    b.disabled = true; b.textContent = "Enviando…";
+    api("POST", "/api/informe")
+      .then(function (r) { estado.empresa = r.empresa; pintarInforme(); })
+      .catch(function (e) { if (e.empresa) estado.empresa = e.empresa; aviso(cont, "rojo", "<strong>" + escapar(e.error || "No fue posible reenviar el informe.") + "</strong>" + (e.causa ? " (" + escapar(e.causa) + ")" : "")); })
+      .then(function () { b.disabled = false; b.textContent = "Reenviar el informe a mi correo"; });
+  });
 
   arrancar();
 })();

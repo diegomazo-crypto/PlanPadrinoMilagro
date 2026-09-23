@@ -280,7 +280,7 @@
         body: JSON.stringify({ tokenRegistro: token, clave: clave, confirmacion: conf })
       }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { j._estado = r.status; return j; }); })
         .then(function (j) {
-          if (j.ok) { window.location.href = j.tipo === "ies" ? "portal-ies.html" : "portal.html"; return; }
+          if (j.ok) { window.location.href = j.tipo === "ies" ? "portal-ies.html" : (j.tipo === "lider" ? "portal-grupo.html" : "portal.html"); return; }
           mostrar(estado, "rojo", "<strong>" + escapar(j.error || "No fue posible crear la clave.") + "</strong>");
         }).catch(function () { mostrar(estado, "rojo", "No fue posible conectar con el servidor. Intente de nuevo."); })
         .then(function () { boton.disabled = false; boton.textContent = boton.getAttribute("data-texto"); });

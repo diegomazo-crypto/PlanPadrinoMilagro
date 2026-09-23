@@ -13,7 +13,10 @@ afectadas por el terremoto del 10 de agosto de 2026.
 | `ies.html` | Guía de participación para IES, estudiantes y docentes y formulario de vinculación institucional. |
 | `recursos.html` | Documentos descargables, estructura del formato común de reporte, enlaces, preguntas frecuentes y contacto. |
 | `portal.html` | Portal de empresas: inicio de sesión, aceptación del compromiso y los términos, autodiagnóstico por pasos y resultados. |
-| `portal-ies.html` | Portal de instituciones: inicio de sesión del responsable y administración de los grupos que apadrinan empresas. |
+| `portal-ies.html` | Portal de instituciones: tablero de control del coordinador (grupos, personas, confirmaciones, edición y cancelación). |
+| `grupos.html` | Registro de un grupo que apadrina por su líder, con hasta cuatro integrantes, y creación de la clave. |
+| `confirmar.html` | Confirmación de participación de un integrante desde el enlace recibido por correo. |
+| `portal-grupo.html` | Área de trabajo del grupo (líder): estado de las confirmaciones, reenvío de invitaciones y edición. |
 
 ## Estructura
 
@@ -24,9 +27,9 @@ afectadas por el terremoto del 10 de agosto de 2026.
 ├── recursos.html
 ├── portal.html
 ├── portal-ies.html
-├── api/                    Funciones de servidor (Vercel): registro, clave, sesion, aceptacion, diagnostico, exportar,
-│                           ies-padron, ies-registro, grupos
-├── lib/                    Cifrado, almacenamiento, sesión y acceso a los registros (empresas e IES)
+├── api/                    Funciones de servidor (Vercel): registro, clave, sesion, aceptacion, diagnostico, informe,
+│                           exportar, ies-padron, ies-registro, grupos
+├── lib/                    Cifrado, almacenamiento, sesión, registros (empresas e IES), correo e informe PDF
 ├── assets/
 │   ├── css/styles.css      Hoja de estilos
 │   ├── js/config.js        Configuración (endpoint del formulario de IES, correo)
@@ -34,7 +37,12 @@ afectadas por el terremoto del 10 de agosto de 2026.
 │   ├── js/instrumento.js   Instrumento de autodiagnóstico (modelo CRL), usado en navegador y servidor
 │   ├── js/ies-snies.js     Padrón de respaldo de IES activas (SNIES), usado en navegador y servidor
 │   ├── js/portal.js        Lógica del portal de empresas
-│   ├── js/portal-ies.js    Lógica del portal de instituciones (grupos)
+│   ├── js/portal-ies.js    Tablero del coordinador de la IES
+│   ├── js/grupos.js        Registro de grupos (líder)
+│   ├── js/grupo-editor.js  Editor compartido de grupo (líder y coordinador)
+│   ├── js/portal-grupo.js  Área de trabajo del grupo
+│   ├── js/confirmar.js     Confirmación de integrantes
+│   ├── js/catalogo-grupos.js Áreas, vinculaciones y estados (navegador y servidor)
 │   └── img/
 ├── scripts/servidor-local.js   Servidor de desarrollo (sitio + API) para pruebas locales
 ├── scripts/actualizar-padron-ies.js   Regenera el padrón de IES desde una exportación oficial del SNIES
@@ -61,24 +69,39 @@ Almacenamiento: un archivo por empresa en Vercel Blob (acceso privado), cifrado 
 guardarse. Las claves de acceso se guardan con hash scrypt. Las sesiones son cookies firmadas (HttpOnly).
 Ninguna empresa puede ver datos de otra: cada solicitud opera solo sobre el registro de la sesión.
 
-## Portal de instituciones (IES) y grupos
+## Portal de instituciones (IES) y grupos que apadrinan
 
 Flujo de una IES:
 
-1. **Vinculación** en `ies.html`. El responsable designado busca la institución en el **padrón de IES activas
-   del SNIES** (o la declara manualmente si no aparece), registra sus datos de contacto, la capacidad de
-   acompañamiento y acepta los compromisos institucionales en bloque. Cada institución admite un único
-   responsable con cuenta; un segundo intento recibe un aviso con el correo enmascarado del responsable actual.
-2. **Clave de acceso** con las mismas reglas que las empresas (no puede ser ni contener datos de la inscripción).
-   El usuario es el correo institucional del responsable.
-3. **Portal de instituciones** (`portal-ies.html`): el responsable crea, edita y elimina los **grupos que
-   apadrinan**. Cada grupo registra nombre, programa, campo de asesoramiento principal y secundarios, temas,
-   modalidad, territorios, periodo de inicio, capacidad de empresas, docente tutor (contacto principal) y los
-   miembros con rol, programa, semestre y contacto. Con esos datos la secretaría técnica hace el emparejamiento.
+1. **Vinculación** en `ies.html`. El responsable (coordinador) busca la institución en el **padrón de IES activas
+   del SNIES** (o la declara manualmente si no aparece), registra sus datos de contacto y acepta los compromisos
+   institucionales. Cada institución admite un único coordinador con cuenta.
+2. **Clave de acceso** con las mismas reglas que las empresas; recibe el correo de confirmación de la cuenta.
+3. **Tablero de control** (`portal-ies.html`): cuántos grupos se han registrado y en qué estado, cuántas personas
+   participan y cuántas han confirmado. El coordinador puede editar la información de un grupo, cambiar
+   integrantes, confirmar un grupo o cancelarlo.
 
-Los registros de IES se guardan cifrados en `ies/<id>.json`, separados de los de empresas. Las sesiones llevan
-el tipo de cuenta dentro del token firmado, de modo que una cuenta de empresa no puede usar las rutas de IES ni
-al contrario, aunque compartan correo.
+Flujo de un grupo (`grupos.html`):
+
+1. El **líder** registra el grupo: institución (desplegable con las IES activas del padrón SNIES, marcando las que ya
+   tienen coordinador vinculado), nombre, área de intervención
+   (una de las cuatro), sus datos (nombre, vinculación, móvil, correo) y hasta **cuatro integrantes** (nombre,
+   vinculación, móvil, correo). Luego crea su clave: su correo es el usuario del **área de trabajo del grupo**
+   (`portal-grupo.html`).
+2. Cada integrante recibe un **correo con un enlace personal** (30 días) para confirmar o declinar su participación
+   (`confirmar.html`). El líder ve el estado de cada uno, puede reenviar invitaciones y reemplazar a quien no pueda.
+3. Cuando **todos confirman**, el coordinador de la IES recibe por correo el grupo completo con todos los datos y lo
+   **confirma** en el tablero. El líder recibe el aviso y el grupo queda listo para la asignación de empresa. Si la
+   IES aún no tiene coordinador, el grupo queda ligado a la institución por su clave del padrón y el aviso se envía
+   cuando el coordinador se vincula y abre su tablero.
+
+Estados del grupo: `registrado` → `integrantes_confirmados` → `confirmado` → `asignado`, o `cancelado`.
+Los grupos se guardan cifrados en `grupos/<id>.json` (id derivado del correo del líder); las IES en `ies/<id>.json`.
+Las sesiones llevan el tipo de cuenta (`empresa`, `ies`, `lider`) dentro del token firmado.
+
+API: `GET /api/grupos?accion=ies` (padrón SNIES más IES declaradas, con marca de vinculada), `POST ?accion=registro`, `GET ?accion=invitacion&token=`,
+`POST ?accion=confirmar`, y con sesión: `GET` (tablero o grupo propio), `PUT` (editar), `POST ?accion=reenviar`,
+`POST ?accion=confirmar-grupo` y `POST ?accion=cancelar` (solo coordinador).
 
 ### Padrón de IES activas (SNIES)
 
@@ -98,6 +121,47 @@ node scripts/actualizar-padron-ies.js exportacion-snies.csv
 ```
 
 La respuesta de `/api/ies-padron` indica en `fuente` cuál de las tres se está usando.
+
+## Correos automáticos e informe de autodiagnóstico
+
+El portal envía dos correos desde el buzón del Plan (`planpadrinomilagro@ceipa.edu.co`):
+
+1. **Confirmación de cuenta**, al crear la clave (empresas, IES y líderes de grupo): usuario, enlace al portal y próximos pasos.
+   Los grupos generan además: invitación a cada integrante, aviso al coordinador cuando todos confirman, y avisos al
+   líder cuando el coordinador confirma o cancela el grupo.
+2. **Informe de autodiagnóstico**, al finalizar el diagnóstico: correo a la empresa con el informe en PDF
+   adjunto y copia al buzón del Plan, para compartirlo con la IES madrina.
+
+El informe (modelo CRL: resultado global, capacidades, factor por factor con observaciones y datos de
+desempeño) se archiva cifrado en `informes/<id>.json` y se puede descargar:
+
+```
+/api/informe                          → la empresa, con su sesión (botón "Descargar el informe" en el portal)
+/api/informe?id=<id>&clave=<admin>    → la secretaría técnica, cualquier empresa (el id aparece en /api/exportar)
+POST /api/informe                     → la empresa reenvía el informe a su correo
+```
+
+Si el correo falla, el flujo no se interrumpe: el informe queda archivado, el portal lo indica y el intento
+se registra en el historial de la empresa (`correos`). `GET /api/salud` muestra el modo de correo activo.
+
+### Configurar el buzón (Microsoft 365)
+
+| Variable | Valor |
+|---|---|
+| `PPM_CORREO_USUARIO` | `planpadrinomilagro@ceipa.edu.co` |
+| `PPM_CORREO_CLAVE` | Contraseña del buzón (o contraseña de aplicación si tiene MFA). |
+| `PPM_CORREO_SERVIDOR` / `PPM_CORREO_PUERTO` | Opcionales; por defecto `smtp.office365.com` y `587` (STARTTLS). |
+| `PPM_CORREO_REMITENTE` | Opcional; por defecto `Plan Milagro <planpadrinomilagro@ceipa.edu.co>`. |
+| `PPM_CORREO_COPIA` | Opcional; buzón que recibe copia del informe. Por defecto el mismo buzón del Plan; vacío para no copiar. |
+| `PPM_URL_SITIO` | Opcional; enlace usado en los correos (por defecto `https://www.planpadrinomilagro.co`). |
+
+Requisitos en Microsoft 365: el buzón debe tener habilitado **SMTP autenticado** (Centro de administración de
+Exchange → Buzones → el buzón → Administrar aplicaciones de correo → *SMTP autenticado*) y la organización
+debe permitir la autenticación básica para SMTP. Si la política de seguridad lo bloquea, la alternativa es un
+registro de aplicación en Entra ID con permiso `Mail.Send` (Microsoft Graph); avise para adaptar el envío.
+
+Sin credenciales, en desarrollo local los correos se guardan como archivos en `.datos-local/correos/`; en
+Vercel se marcan como no enviados sin afectar el flujo.
 
 ### Variables de entorno en Vercel (Settings → Environment Variables)
 
@@ -121,8 +185,9 @@ cuando la inscripción falla en producción.
 ```
 https://www.planpadrinomilagro.co/api/exportar?formato=csv     → resumen en CSV (una fila por empresa)
 https://www.planpadrinomilagro.co/api/exportar                 → JSON completo (inscripción, aceptaciones, respuestas y resultados)
-https://www.planpadrinomilagro.co/api/exportar?tipo=ies&formato=csv → IES vinculadas y sus grupos (una fila por grupo)
-https://www.planpadrinomilagro.co/api/exportar?tipo=ies        → JSON completo de las IES, responsables y grupos
+https://www.planpadrinomilagro.co/api/exportar?tipo=ies&formato=csv → IES vinculadas con conteo de grupos (una fila por IES)
+https://www.planpadrinomilagro.co/api/exportar?tipo=grupos&formato=csv → grupos que apadrinan (una fila por persona, con estado)
+https://www.planpadrinomilagro.co/api/exportar?tipo=ies | ?tipo=grupos → JSON completo
 ```
 
 Envíe la clave de administración en la cabecera `x-clave-admin` (por ejemplo con `curl -H`) o como

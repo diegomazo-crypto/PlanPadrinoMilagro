@@ -6,12 +6,12 @@
   <title>Portal de empresas — Plan Padrino Milagro</title>
   <meta name="description" content="Portal de las empresas inscritas en el Plan Padrino Milagro: aceptación de compromisos y autodiagnóstico de capacidades empresariales.">
   <meta name="robots" content="noindex">
-  <link rel="icon" href="assets/img/favicon.png?v=20260922f" type="image/png" sizes="64x64">
-  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20260922f">
+  <link rel="icon" href="assets/img/favicon.png?v=20260923c" type="image/png" sizes="64x64">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20260923c">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/styles.css?v=20260922f">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260923c">
 </head>
 <body>
 <a class="salto" href="#contenido">Ir al contenido</a>
@@ -20,7 +20,7 @@
   <div class="tricolor" aria-hidden="true"></div>
   <div class="contenedor encabezado__interior">
     <a class="marca" href="index.html">
-      <img class="marca__logo" src="assets/img/PlanMilagro_Logo_Horizontal_Color_v2_202609.png?v=20260922f" alt="Plan Milagro, para reconstrucción productiva" width="220" height="48">
+      <img class="marca__logo" src="assets/img/PlanMilagro_Logo_Horizontal_Color_v2_202609.png?v=20260923c" alt="Plan Milagro, para reconstrucción productiva" width="220" height="48">
     </a>
     <button class="nav-toggle" aria-expanded="false" aria-controls="nav-principal" aria-label="Abrir menú">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -74,7 +74,7 @@
           </div>
           <div class="formulario__estado" aria-live="polite"></div>
         </form>
-        <p class="portal__ayuda">¿Es una Institución de Educación Superior? <a href="portal-ies.html">Ingrese al portal de instituciones</a>. Si olvidó su clave, escriba a <a href="mailto:padrinomilagro@ceipa.edu.co">padrinomilagro@ceipa.edu.co</a> desde el correo registrado.</p>
+        <p class="portal__ayuda">¿Es una Institución de Educación Superior? <a href="portal-ies.html">Ingrese al portal de instituciones</a>. Si olvidó su clave, escriba a <a href="mailto:planpadrinomilagro@ceipa.edu.co">planpadrinomilagro@ceipa.edu.co</a> desde el correo registrado.</p>
       </div>
     </div>
   </section>
@@ -172,7 +172,7 @@
     <div class="contenedor contenedor--texto" style="text-align:center">
       <span class="sobretitulo">Proceso finalizado</span>
       <h1 class="portal__titulo">Gracias por su interés en el Plan Padrino Milagro</h1>
-      <p class="entradilla">Hemos registrado que no acepta las condiciones del acompañamiento, por lo que el proceso termina aquí. Si en el futuro desea reconsiderarlo, escríbanos a <a href="mailto:padrinomilagro@ceipa.edu.co">padrinomilagro@ceipa.edu.co</a>.</p>
+      <p class="entradilla">Hemos registrado que no acepta las condiciones del acompañamiento, por lo que el proceso termina aquí. Si en el futuro desea reconsiderarlo, escríbanos a <a href="mailto:planpadrinomilagro@ceipa.edu.co">planpadrinomilagro@ceipa.edu.co</a>.</p>
       <a class="boton boton--primario" href="index.html">Volver al inicio</a>
     </div>
   </section>
@@ -222,8 +222,10 @@
         <p class="entradilla">Este es el punto de partida del acompañamiento. El equipo universitario asignado lo revisará con usted y lo contrastará con evidencias en la primera sesión.</p>
       </div>
       <div id="res-contenido"></div>
-      <div class="formulario__acciones" style="margin-top:28px">
-        <button class="boton boton--primario" type="button" onclick="window.print()">Imprimir o guardar en PDF</button>
+      <div id="res-informe" class="formulario__estado" aria-live="polite" style="margin-top:20px"></div>
+      <div class="formulario__acciones" style="margin-top:20px">
+        <a class="boton boton--primario" id="res-descargar" href="/api/informe" download>Descargar el informe (PDF)</a>
+        <button class="boton boton--contorno" type="button" id="res-reenviar">Reenviar el informe a mi correo</button>
         <a class="boton boton--contorno" href="index.html">Volver al inicio</a>
       </div>
       <p class="portal__ayuda">La información de este autodiagnóstico es confidencial y solo la conocen la secretaría técnica y la IES que acompañará a su empresa.</p>
@@ -238,7 +240,7 @@
     <div class="pie__interior">
       <div>
         <a class="marca" href="index.html">
-          <img class="marca__logo marca__logo--pie" src="assets/img/PlanMilagro_Logo_Mono_Blanco_v2_202609.png?v=20260922f" alt="Plan Milagro, para reconstrucción productiva">
+          <img class="marca__logo marca__logo--pie" src="assets/img/PlanMilagro_Logo_Mono_Blanco_v2_202609.png?v=20260923c" alt="Plan Milagro, para reconstrucción productiva">
         </a>
         <p>Plan Padrino Milagro (Plan Milagro): iniciativa del sistema de educación superior colombiano, convocada por la Institución Universitaria CEIPA, ACIET, ASIESCA, ASCUN, Diálogos de Futuro, la Fundación Empresarios por la Educación y Connect. CEIPA ejerce la secretaría técnica inicial.</p>
       </div>
@@ -254,7 +256,7 @@
       <div>
         <h4>Contacto</h4>
         <ul>
-          <li><a href="mailto:padrinomilagro@ceipa.edu.co">padrinomilagro@ceipa.edu.co</a></li>
+          <li><a href="mailto:planpadrinomilagro@ceipa.edu.co">planpadrinomilagro@ceipa.edu.co</a></li>
           <li>Secretaría técnica: Institución Universitaria CEIPA, Medellín, Colombia</li>
         </ul>
       </div>
@@ -266,9 +268,9 @@
   </div>
 </footer>
 
-<script src="assets/js/config.js?v=20260922f"></script>
-<script src="assets/js/instrumento.js?v=20260922f"></script>
-<script src="assets/js/main.js?v=20260922f"></script>
-<script src="assets/js/portal.js?v=20260922f"></script>
+<script src="assets/js/config.js?v=20260923c"></script>
+<script src="assets/js/instrumento.js?v=20260923c"></script>
+<script src="assets/js/main.js?v=20260923c"></script>
+<script src="assets/js/portal.js?v=20260923c"></script>
 </body>
 </html>
