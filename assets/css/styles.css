@@ -653,3 +653,38 @@ td ul { margin: 0; padding-left: 1.1em; }
 .miembro__quitar { background: none; border: 1px solid var(--gris-300); border-radius: 8px; padding: 8px 10px; cursor: pointer; color: var(--rojo); font-weight: 700; }
 @media (max-width: 900px) { .miembro { grid-template-columns: 1fr 1fr; } .miembro__quitar { grid-column: 1 / -1; } }
 .formulario-envoltura--grupo { max-width: 1040px; }
+
+/* ---------- Grupos que apadrinan: registro, área de trabajo y tablero ---------- */
+.miembro--grupo { grid-template-columns: 1.4fr 1.1fr 0.9fr 1.4fr auto; }
+.miembro__estado { grid-column: 1 / -1; font-size: 0.85rem; color: var(--gris-texto); display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+@media (max-width: 900px) { .miembro--grupo { grid-template-columns: 1fr 1fr; } }
+.estado { display: inline-block; font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--fondo-claro); color: var(--gris-texto); white-space: nowrap; }
+.estado--confirmado { background: var(--verde-100); color: var(--verde); }
+.estado--pendiente { background: var(--amarillo-100); color: var(--amarillo-700); }
+.estado--declinado { background: var(--rojo-100); color: var(--rojo); }
+.estado--nuevo { background: var(--azul-050); color: var(--azul); }
+.enlace { background: none; border: 0; padding: 0; color: var(--azul); font: inherit; font-size: 0.85rem; text-decoration: underline; cursor: pointer; }
+.enlace[disabled] { opacity: .6; cursor: progress; }
+.conf-datos { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 16px 0; font-size: 0.95rem; }
+.conf-datos dt { color: var(--gris-500); font-weight: 700; }
+.conf-datos dd { margin: 0; }
+
+.tablero { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+.tablero__tarjeta { background: #fff; border: 1px solid var(--borde); border-radius: 14px; padding: 16px 18px; box-shadow: var(--sombra-sm); }
+.tablero__valor { font-family: var(--fuente-titulos); font-size: 2rem; font-weight: 800; color: var(--azul); line-height: 1.1; }
+.tablero__valor--alerta { color: var(--rojo); }
+.tablero__etiqueta { font-size: 0.85rem; color: var(--gris-texto); margin-top: 4px; }
+.panel-ies__filtros { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; }
+.panel-ies__filtros select { font: inherit; padding: 8px 10px; border: 1px solid var(--gris-300); border-radius: 8px; background: #fff; }
+.grupo__estado--registrado { background: var(--amarillo-100); color: var(--amarillo-700); }
+.grupo__estado--integrantes_confirmados { background: var(--azul-050); color: var(--azul); }
+.grupo__estado--confirmado { background: var(--verde-100); color: var(--verde); }
+.grupo__estado--asignado { background: var(--azul); color: #fff; }
+.grupo__estado--cancelado { background: var(--rojo-100); color: var(--rojo); }
+.grupo__personas { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: 0.9rem; }
+.grupo__personas li { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; justify-content: space-between; padding: 6px 0; border-top: 1px solid var(--borde); }
+.grupo__personas li:first-child { border-top: 0; }
+.grupo__personas .quien { color: var(--marino); }
+.grupo__personas .quien small { display: block; color: var(--gris-500); }
+.grupo__acciones { flex-wrap: wrap; }
+.grupo--ancho { grid-column: 1 / -1; }

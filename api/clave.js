@@ -5,6 +5,7 @@ const { responder, error, leerCuerpo, soloMetodos, iniciarSesion } = require("..
 const { verificarToken, hashClave } = require("../lib/cifrado");
 const empresas = require("../lib/empresas");
 const ies = require("../lib/ies");
+const grupos = require("../lib/grupos");
 const correo = require("../lib/correo");
 
 function normal(s) { return String(s || "").trim().toLowerCase().replace(/\s+/g, " "); }
@@ -18,7 +19,7 @@ function validarClave(clave, confirmacion, empresa) {
   const c = normal(clave);
   const sinTildes = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const cPlano = sinTildes(c);
-  const fuente = Object.assign({}, empresa.datos || {}, empresa.institucion || {});
+  const fuente = Object.assign({}, empresa.datos || {}, empresa.institucion || {}, empresa.lider || {}, empresa.ies || {}, { nombreGrupo: empresa.nombre });
   const valores = [];
   Object.values(fuente).forEach((v) => {
     if (typeof v === "string") valores.push(normal(v));
@@ -47,8 +48,9 @@ module.exports = async function (req, res) {
     const { tokenRegistro, clave, confirmacion } = await leerCuerpo(req);
     const carga = verificarToken(tokenRegistro, "registro");
     if (!carga) return error(res, 401, "El enlace de creación de clave expiró. Vuelva a diligenciar la inscripción.");
-    const esIes = carga.t === "ies";
-    const modulo = esIes ? ies : empresas;
+    const tipo = carga.t === "ies" || carga.t === "lider" ? carga.t : "empresa";
+    const esIes = tipo === "ies";
+    const modulo = tipo === "ies" ? ies : (tipo === "lider" ? grupos : empresas);
     const cuenta = await modulo.cargarPorId(carga.id);
     if (!cuenta) return error(res, 404, "No se encontró la inscripción.");
     if (cuenta.clave) return error(res, 409, "Esta cuenta ya tiene clave. Inicie sesión en el portal.");
@@ -57,18 +59,18 @@ module.exports = async function (req, res) {
     if (problema) return error(res, 400, problema);
 
     cuenta.clave = hashClave(clave);
-    cuenta.estado = "clave_creada";
+    if (tipo !== "lider") cuenta.estado = "clave_creada";   // el estado de un grupo describe su flujo, no la cuenta
     modulo.registrarEvento(cuenta, "clave_creada");
     // Correo de confirmación de la cuenta (no bloquea el flujo si falla)
-    const mensaje = esIes ? correo.confirmacionCuentaIes(cuenta) : correo.confirmacionCuentaEmpresa(cuenta);
+    const mensaje = tipo === "ies" ? correo.confirmacionCuentaIes(cuenta) : (tipo === "lider" ? correo.confirmacionCuentaLider(cuenta) : correo.confirmacionCuentaEmpresa(cuenta));
     const envio = await correo.enviar({ para: cuenta.correo, asunto: mensaje.asunto, html: mensaje.html, copia: "" });
     cuenta.correos = cuenta.correos || [];
     cuenta.correos.push({ tipo: "confirmacion_cuenta", fecha: envio.fecha, estado: envio.ok ? "enviado" : "fallido", modo: envio.modo, error: envio.error });
     modulo.registrarEvento(cuenta, envio.ok ? "correo_confirmacion_enviado" : "correo_confirmacion_fallido");
     await modulo.guardar(cuenta);
-    iniciarSesion(req, res, cuenta.id, esIes ? "ies" : "empresa");
+    iniciarSesion(req, res, cuenta.id, tipo);
     const vista = modulo.vistaPublica(cuenta);
-    responder(res, 200, esIes ? { ok: true, tipo: "ies", ies: vista } : { ok: true, tipo: "empresa", empresa: vista });
+    responder(res, 200, tipo === "ies" ? { ok: true, tipo: "ies", ies: vista } : (tipo === "lider" ? { ok: true, tipo: "lider", grupo: vista } : { ok: true, tipo: "empresa", empresa: vista }));
   } catch (e) {
     console.error("clave:", e);
     error(res, 500, "No fue posible guardar la clave. Intente de nuevo.");

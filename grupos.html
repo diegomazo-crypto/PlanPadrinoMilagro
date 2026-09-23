@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registro de grupos que apadrinan — Plan Padrino Milagro</title>
+  <meta name="description" content="Registro de los grupos de estudiantes, docentes y egresados que apadrinarán a una empresa en el Plan Padrino Milagro (Plan Milagro).">
+  <link rel="canonical" href="https://www.planpadrinomilagro.co/grupos">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Plan Padrino Milagro">
+  <meta property="og:locale" content="es_CO">
+  <meta property="og:url" content="https://www.planpadrinomilagro.co/grupos">
+  <meta property="og:title" content="Registro de grupos que apadrinan — Plan Padrino Milagro">
+  <meta property="og:description" content="Registro de los grupos de estudiantes, docentes y egresados que apadrinarán a una empresa en el Plan Padrino Milagro (Plan Milagro).">
+  <meta property="og:image" content="https://www.planpadrinomilagro.co/assets/img/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="assets/img/favicon.png?v=20260923b" type="image/png" sizes="64x64">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20260923b">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260923b">
+</head>
+<body>
+<a class="salto" href="#contenido">Ir al contenido</a>
+
+<header class="encabezado">
+  <div class="tricolor" aria-hidden="true"></div>
+  <div class="contenedor encabezado__interior">
+    <a class="marca" href="index.html">
+      <img class="marca__logo" src="assets/img/PlanMilagro_Logo_Horizontal_Color_v2_202609.png?v=20260923b" alt="Plan Milagro, para reconstrucción productiva" width="220" height="48">
+    </a>
+    <button class="nav-toggle" aria-expanded="false" aria-controls="nav-principal" aria-label="Abrir menú">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <nav class="nav" id="nav-principal" aria-label="Principal">
+      <a href="index.html">Plan Milagro</a>
+      <a href="empresas.html">Empresas</a>
+      <a href="ies.html">Instituciones</a>
+      <a href="recursos.html">Recursos</a>
+      <a href="portal.html">Portal</a>
+      <a class="boton boton--primario boton--peq" href="grupos.html">Registrar un grupo</a>
+    </nav>
+  </div>
+</header>
+
+<main id="contenido">
+
+  <section class="hero hero--sub">
+    <div class="contenedor hero__interior">
+
+  <section class="hero hero--sub">
+    <div class="contenedor hero__interior">
+      <div>
+        <span class="hero__etiqueta">Grupos que apadrinan</span>
+        <h1>Registre el grupo que acompañará a una empresa</h1>
+        <p class="hero__intro">
+          El líder registra el grupo con hasta cuatro integrantes. Cada integrante recibirá un correo para confirmar su
+          participación; cuando todos confirmen, el coordinador de la institución confirmará el grupo y la secretaría
+          técnica asignará la empresa que acompañarán.
+        </p>
+        <div class="hero__acciones">
+          <a class="boton boton--primario" href="#registro">Ir al formulario</a>
+          <a class="boton boton--contorno" href="portal-grupo.html">Área de trabajo del grupo</a>
+          <a class="boton boton--contorno" href="ies.html#objetivo">Leer la guía para IES</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion seccion--gris" id="registro">
+    <div class="contenedor">
+      <div class="seccion__cabecera seccion__cabecera--centro">
+        <span class="sobretitulo">Registro de grupo</span>
+        <h2>Formulario de registro del grupo</h2>
+        <p class="entradilla">Lo diligencia el <strong>líder del grupo</strong>; su correo será el usuario del área de trabajo. Los campos marcados con <span style="color:var(--rojo)">*</span> son obligatorios.</p>
+      </div>
+
+      <div class="formulario-envoltura">
+        <form class="formulario" id="form-grupo-registro" novalidate>
+          <input class="trampa" type="text" name="_trampa" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+          <fieldset>
+            <legend>Paso 1. Institución y grupo</legend>
+            <div class="campos">
+              <div class="campo campo--ancho">
+                <label for="g-ies">Institución de Educación Superior <span class="req">*</span></label>
+                <select id="g-ies" name="iesId" required><option value="">Cargando instituciones vinculadas…</option></select>
+                <span class="ayuda" id="g-ies-ayuda">Solo aparecen las instituciones vinculadas al Plan con un coordinador registrado. Si la suya no aparece, <a href="ies.html#inscripcion">pida al responsable que la vincule</a>.</span>
+                <span class="error">Seleccione la institución.</span>
+              </div>
+              <div class="campo campo--ancho">
+                <label for="g-nombre">Nombre del grupo <span class="req">*</span></label>
+                <input type="text" id="g-nombre" name="nombre" required minlength="3" placeholder="Ej.: Equipo Finanzas Contaduría 2026-2">
+                <span class="error">Indique un nombre de al menos 3 caracteres.</span>
+              </div>
+            </div>
+            <div class="campo campo--grupo" data-min="1" style="margin-top:16px">
+              <span class="campo__titulo" style="font-weight:700;font-size:.95rem;display:block;margin-bottom:8px">Área de intervención <span class="req">*</span></span>
+              <div class="opciones" id="g-areas"></div>
+              <span class="error">Seleccione el área de intervención.</span>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Paso 2. Líder del grupo</legend>
+            <p>Coordina el grupo y es el contacto con la empresa y la secretaría técnica. Su correo será el usuario del área de trabajo.</p>
+            <div class="campos">
+              <div class="campo">
+                <label for="l-nombre">Nombre completo <span class="req">*</span></label>
+                <input type="text" id="l-nombre" name="lider_nombre" required autocomplete="name">
+                <span class="error">Indique el nombre del líder.</span>
+              </div>
+              <div class="campo">
+                <label for="l-vinculacion">Vinculación con la institución <span class="req">*</span></label>
+                <select id="l-vinculacion" name="lider_vinculacion" required><option value="">Seleccione…</option></select>
+                <span class="error">Seleccione la vinculación.</span>
+              </div>
+              <div class="campo">
+                <label for="l-telefono">Teléfono móvil <span class="req">*</span></label>
+                <input type="tel" id="l-telefono" name="lider_telefono" required inputmode="tel" pattern="[0-9+ ()-]{7,20}" placeholder="Ej.: 300 123 4567">
+                <span class="error">Indique un número de móvil válido.</span>
+              </div>
+              <div class="campo">
+                <label for="l-correo">Correo (será su usuario) <span class="req">*</span></label>
+                <input type="email" id="l-correo" name="lider_correo" required autocomplete="email">
+                <span class="error">Indique un correo válido.</span>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Paso 3. Integrantes (máximo 4)</legend>
+            <p>Cada integrante recibirá un correo para confirmar su participación. Los correos no pueden repetirse.</p>
+            <div class="miembros" id="g-integrantes"></div>
+            <div class="formulario__acciones" style="margin-top:12px">
+              <button class="boton boton--contorno boton--peq" type="button" id="g-agregar">Agregar integrante</button>
+              <span class="formulario__nota" id="g-integrantes-nota"></span>
+            </div>
+            <span class="error" id="g-integrantes-error" style="display:none;color:var(--rojo);font-size:.85rem">Registre al menos un integrante con todos sus datos y sin correos repetidos.</span>
+          </fieldset>
+
+          <fieldset>
+            <legend>Paso 4. Reglas de participación</legend>
+            <ol class="compromisos-lista">
+              <li>El grupo acompaña a una sola empresa durante 8 a 12 semanas, con supervisión académica de su institución.</li>
+              <li>Trata la información de la empresa de manera confidencial y solo para los fines del acompañamiento.</li>
+              <li>Aplica la metodología común del Plan y reporta avances en el formato común.</li>
+              <li>El acompañamiento es gratuito para la empresa y no genera contraprestación para el grupo.</li>
+              <li>Los datos de contacto registrados se usan para coordinar el acompañamiento y se tratan conforme a la Ley 1581 de 2012.</li>
+            </ol>
+            <div class="campo campo--grupo" data-min="1">
+              <label class="opcion opcion--ancha"><input type="checkbox" name="acepta" value="sí"><span><strong>Acepto las reglas de participación</strong><small>en nombre del grupo, y autorizo el envío de las invitaciones a los integrantes registrados.</small></span></label>
+              <span class="error">Debe aceptar las reglas de participación.</span>
+            </div>
+          </fieldset>
+
+          <div class="formulario__acciones">
+            <button class="boton boton--primario" type="submit" data-texto="Registrar el grupo">Registrar el grupo</button>
+            <span class="formulario__nota">¿Ya registró su grupo? <a href="portal-grupo.html">Ingrese al área de trabajo</a>.</span>
+          </div>
+          <div class="formulario__estado" aria-live="polite"></div>
+        </form>
+      </div>
+
+      <div class="formulario-envoltura formulario-envoltura--angosta" id="crear-clave" hidden style="margin-top:28px">
+        <form class="formulario" id="form-clave" novalidate>
+          <fieldset>
+            <legend>Paso 5. Cree su clave de acceso</legend>
+            <p>Su usuario será el correo del líder: <strong id="clave-correo"></strong>. Con esta clave ingresará al área de trabajo del grupo para seguir las confirmaciones de los integrantes y, más adelante, el acompañamiento a la empresa.</p>
+            <ul class="clave-reglas">
+              <li>Mínimo 8 caracteres, con letras y números.</li>
+              <li>No puede ser ni contener ningún dato del registro: nombre del grupo, de la institución, del líder, teléfono o correo.</li>
+            </ul>
+            <div class="campos">
+              <div class="campo">
+                <label for="clave-nueva">Clave <span class="req">*</span></label>
+                <input type="password" id="clave-nueva" name="clave" required minlength="8" autocomplete="new-password">
+                <span class="error">Indique una clave de al menos 8 caracteres.</span>
+              </div>
+              <div class="campo">
+                <label for="clave-confirmacion">Confirme la clave <span class="req">*</span></label>
+                <input type="password" id="clave-confirmacion" name="confirmacion" required minlength="8" autocomplete="new-password">
+                <span class="error">Repita la clave.</span>
+              </div>
+            </div>
+          </fieldset>
+          <div class="formulario__acciones">
+            <button class="boton boton--primario" type="submit" data-texto="Crear clave e ingresar al área de trabajo">Crear clave e ingresar al área de trabajo</button>
+          </div>
+          <div class="formulario__estado" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pie">
+  <div class="tricolor" aria-hidden="true"></div>
+  <div class="contenedor">
+    <div class="pie__interior">
+      <div>
+        <a class="marca" href="index.html">
+          <img class="marca__logo marca__logo--pie" src="assets/img/PlanMilagro_Logo_Mono_Blanco_v2_202609.png?v=20260923b" alt="Plan Milagro, para reconstrucción productiva">
+        </a>
+        <p>Plan Padrino Milagro (Plan Milagro): iniciativa del sistema de educación superior colombiano, convocada por la Institución Universitaria CEIPA, ACIET, ASIESCA, ASCUN, Diálogos de Futuro, la Fundación Empresarios por la Educación y Connect. CEIPA ejerce la secretaría técnica inicial.</p>
+      </div>
+      <div>
+        <h4>Navegación</h4>
+        <ul>
+          <li><a href="index.html">Plan Milagro</a></li>
+          <li><a href="empresas.html">Guía para empresas</a></li>
+          <li><a href="ies.html">Guía para IES</a></li>
+          <li><a href="recursos.html">Recursos</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contacto</h4>
+        <ul>
+          <li><a href="mailto:planpadrinomilagro@ceipa.edu.co">planpadrinomilagro@ceipa.edu.co</a></li>
+          <li>Secretaría técnica: Institución Universitaria CEIPA, Medellín, Colombia</li>
+        </ul>
+      </div>
+    </div>
+    <p class="pie__cierre">Juntos reconstruimos más</p>
+    <div class="pie__legal">
+      © <span data-anio>2026</span> Plan Padrino Milagro para la Reconstrucción Productiva. La información empresarial recibida se trata de manera confidencial y solo para los fines del acompañamiento.
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/config.js?v=20260923b"></script>
+<script src="assets/js/catalogo-grupos.js?v=20260923b"></script>
+<script src="assets/js/main.js?v=20260923b"></script>
+<script src="assets/js/grupos.js?v=20260923b"></script>
+</body>
+</html>
