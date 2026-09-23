@@ -83,20 +83,23 @@ Flujo de una IES:
 
 Flujo de un grupo (`grupos.html`):
 
-1. El **líder** registra el grupo: institución (desplegable con las IES vinculadas), nombre, área de intervención
+1. El **líder** registra el grupo: institución (desplegable con las IES activas del padrón SNIES, marcando las que ya
+   tienen coordinador vinculado), nombre, área de intervención
    (una de las cuatro), sus datos (nombre, vinculación, móvil, correo) y hasta **cuatro integrantes** (nombre,
    vinculación, móvil, correo). Luego crea su clave: su correo es el usuario del **área de trabajo del grupo**
    (`portal-grupo.html`).
 2. Cada integrante recibe un **correo con un enlace personal** (30 días) para confirmar o declinar su participación
    (`confirmar.html`). El líder ve el estado de cada uno, puede reenviar invitaciones y reemplazar a quien no pueda.
 3. Cuando **todos confirman**, el coordinador de la IES recibe por correo el grupo completo con todos los datos y lo
-   **confirma** en el tablero. El líder recibe el aviso y el grupo queda listo para la asignación de empresa.
+   **confirma** en el tablero. El líder recibe el aviso y el grupo queda listo para la asignación de empresa. Si la
+   IES aún no tiene coordinador, el grupo queda ligado a la institución por su clave del padrón y el aviso se envía
+   cuando el coordinador se vincula y abre su tablero.
 
 Estados del grupo: `registrado` → `integrantes_confirmados` → `confirmado` → `asignado`, o `cancelado`.
 Los grupos se guardan cifrados en `grupos/<id>.json` (id derivado del correo del líder); las IES en `ies/<id>.json`.
 Las sesiones llevan el tipo de cuenta (`empresa`, `ies`, `lider`) dentro del token firmado.
 
-API: `GET /api/grupos?accion=ies` (IES vinculadas), `POST ?accion=registro`, `GET ?accion=invitacion&token=`,
+API: `GET /api/grupos?accion=ies` (padrón SNIES más IES declaradas, con marca de vinculada), `POST ?accion=registro`, `GET ?accion=invitacion&token=`,
 `POST ?accion=confirmar`, y con sesión: `GET` (tablero o grupo propio), `PUT` (editar), `POST ?accion=reenviar`,
 `POST ?accion=confirmar-grupo` y `POST ?accion=cancelar` (solo coordinador).
 

@@ -14,12 +14,21 @@
   $("#g-areas").innerHTML = CAT.AREAS.map(function (a, i) { return "<label class='opcion'><input type='radio' name='area' value='" + escapar(a) + "'><span>" + escapar(a) + "</span></label>"; }).join("");
   $("#l-vinculacion").innerHTML = "<option value=''>Seleccione…</option>" + CAT.VINCULACION_LIDER.map(function (v) { return "<option>" + escapar(v) + "</option>"; }).join("");
 
-  var selIes = $("#g-ies");
+  var selIes = $("#g-ies"), ayudaIes = $("#g-ies-ayuda"), instituciones = [];
+  function pintarAyudaIes() {
+    var i = instituciones.filter(function (x) { return x.clave === selIes.value; })[0];
+    if (!i) { ayudaIes.innerHTML = "Lista de IES activas según el SNIES (Ministerio de Educación Nacional)."; return; }
+    ayudaIes.innerHTML = i.vinculada
+      ? "<strong>" + escapar(i.nombre) + "</strong> ya tiene coordinador vinculado: recibirá el grupo cuando todos los integrantes confirmen."
+      : "<strong>" + escapar(i.nombre) + "</strong> aún no tiene coordinador vinculado al Plan. Puede registrar el grupo; el coordinador lo verá en su tablero cuando <a href='ies.html#inscripcion'>vincule la institución</a>.";
+  }
   fetch("/api/grupos?accion=ies", { headers: { "Accept": "application/json" } }).then(function (r) { return r.json(); }).then(function (j) {
     if (!j.ok) throw new Error();
-    if (!j.ies.length) { selIes.innerHTML = "<option value=''>Aún no hay instituciones vinculadas</option>"; return; }
-    selIes.innerHTML = "<option value=''>Seleccione su institución…</option>" + j.ies.map(function (i) { return "<option value='" + escapar(i.id) + "'>" + escapar(i.nombre) + (i.municipio ? " · " + escapar(i.municipio) : "") + "</option>"; }).join("");
+    instituciones = j.ies;
+    selIes.innerHTML = "<option value=''>Seleccione su institución…</option>" + j.ies.map(function (i) { return "<option value='" + escapar(i.clave) + "'>" + escapar(i.nombre) + (i.municipio ? " · " + escapar(i.municipio) : "") + (i.vinculada ? " ✓" : "") + "</option>"; }).join("");
+    pintarAyudaIes();
   }).catch(function () { selIes.innerHTML = "<option value=''>No fue posible cargar las instituciones</option>"; });
+  selIes.addEventListener("change", pintarAyudaIes);
 
   /* Integrantes */
   var cont = $("#g-integrantes"), nota = $("#g-integrantes-nota");
@@ -88,7 +97,7 @@
     var estado = $(".formulario__estado", form), boton = $("button[type=submit]", form);
     if (!validar()) { var primero = $(".invalido", form) || $("#g-integrantes-error"); if (primero) primero.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
     var datos = {
-      iesId: selIes.value, nombre: $("#g-nombre").value.trim(), area: ($("input[name=area]:checked", form) || {}).value,
+      iesClave: selIes.value, nombre: $("#g-nombre").value.trim(), area: ($("input[name=area]:checked", form) || {}).value,
       lider: { nombre: $("#l-nombre").value.trim(), vinculacion: $("#l-vinculacion").value, telefono: $("#l-telefono").value.trim(), correo: $("#l-correo").value.trim() },
       integrantes: recogerIntegrantes().map(function (m) { delete m._fila; return m; }),
       acepta: $("input[name=acepta]", form).checked
@@ -99,7 +108,7 @@
       .then(function (j) {
         if (j._estado === 201 && j.tokenRegistro) {
           var fallidas = (j.invitaciones || []).filter(function (i) { return i.estado !== "enviada"; });
-          aviso(estado, "verde", "<strong>Grupo registrado.</strong> Enviamos la invitación a " + ((j.invitaciones || []).length - fallidas.length) + " integrante(s)." + (fallidas.length ? " No fue posible enviarla a: " + escapar(fallidas.map(function (f) { return f.correo; }).join(", ")) + "; podrá reenviarla desde el área de trabajo." : "") + " Ahora cree su clave de acceso.");
+          aviso(estado, "verde", "<strong>Grupo registrado.</strong> Enviamos la invitación a " + ((j.invitaciones || []).length - fallidas.length) + " integrante(s)." + (fallidas.length ? " No fue posible enviarla a: " + escapar(fallidas.map(function (f) { return f.correo; }).join(", ")) + "; podrá reenviarla desde el área de trabajo." : "") + (j.coordinadorVinculado ? "" : " Su institución aún no tiene coordinador vinculado; el grupo aparecerá en su tablero cuando se vincule.") + " Ahora cree su clave de acceso.");
           var panel = document.getElementById("crear-clave");
           panel.hidden = false; panel.setAttribute("data-token", j.tokenRegistro);
           document.getElementById("clave-correo").textContent = j.correo;

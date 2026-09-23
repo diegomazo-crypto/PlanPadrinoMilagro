@@ -59,8 +59,10 @@
     $("#pg-resumen").textContent = (1 + g.integrantes.length) + " personas · " + confirmados + " de " + g.integrantes.length + " integrantes confirmados";
     $("#pg-editar").hidden = !(g.estado === "registrado" || g.estado === "integrantes_confirmados");
     var pasos = "";
-    if (g.estado === "registrado") pasos = "<p><strong>Siguiente paso:</strong> esperar la confirmación de los integrantes. Puede reenviar la invitación a quien no la haya recibido o reemplazar a quien no pueda participar.</p>";
-    else if (g.estado === "integrantes_confirmados") pasos = "<p><strong>Siguiente paso:</strong> todos confirmaron. El coordinador de " + escapar(g.ies.nombre) + " recibió el grupo y debe confirmarlo en el portal de instituciones.</p>";
+    if (g.estado === "registrado") pasos = "<p><strong>Siguiente paso:</strong> esperar la confirmación de los integrantes. Puede reenviar la invitación a quien no la haya recibido o reemplazar a quien no pueda participar.</p>" + (g.coordinadorVinculado ? "" : "<p>" + escapar(g.ies.nombre) + " aún no tiene coordinador vinculado al Plan; el grupo aparecerá en su tablero cuando se <a href='ies.html#inscripcion'>vincule</a>.</p>");
+    else if (g.estado === "integrantes_confirmados") pasos = g.coordinadorVinculado
+      ? "<p><strong>Siguiente paso:</strong> todos confirmaron. El coordinador de " + escapar(g.ies.nombre) + " recibió el grupo y debe confirmarlo en el portal de instituciones.</p>"
+      : "<p><strong>Todos confirmaron.</strong> " + escapar(g.ies.nombre) + " aún no tiene coordinador vinculado al Plan: pídale al responsable de su institución que la <a href='ies.html#inscripcion'>vincule</a>; en ese momento recibirá el grupo para confirmarlo.</p>";
     else if (g.estado === "confirmado") pasos = "<p><strong>Grupo confirmado</strong> por " + escapar((g.confirmaciones.coordinador || {}).nombre || "el coordinador") + ". La secretaría técnica le asignará la empresa que acompañarán y le avisará por correo.</p>";
     else if (g.estado === "asignado") pasos = "<p><strong>Empresa asignada:</strong> " + escapar((g.empresaAsignada || {}).nombre || "") + ".</p>";
     else if (g.estado === "cancelado") pasos = "<p><strong>El grupo fue cancelado</strong> por la institución" + ((g.cancelacion || {}).motivo ? ": " + escapar(g.cancelacion.motivo) : "") + ". Si es un error, escriba al coordinador.</p>";

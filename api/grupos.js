@@ -16,11 +16,34 @@ const { responder, error, leerCuerpo, soloMetodos, sesionActual, texto } = requi
 const { normalizarCorreo, firmarToken, verificarToken } = require("../lib/cifrado");
 const grupos = require("../lib/grupos");
 const ies = require("../lib/ies");
+const padron = require("../lib/ies-padron");
 const correo = require("../lib/correo");
 const CAT = require("../assets/js/catalogo-grupos.js");
 
 const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DIAS_INVITACION = 30;
+
+/* Clave que identifica a la institución de un coordinador: la del padrón SNIES o, si la
+   declaró manualmente, una derivada de su cuenta. */
+function claveInstitucion(inst) {
+  return (inst.institucion && inst.institucion.clave) || ("ies:" + inst.id);
+}
+
+/* Lista para el desplegable: padrón SNIES completo más las IES declaradas manualmente por un
+   coordinador, marcando cuáles ya tienen coordinador vinculado. */
+async function listaInstituciones() {
+  const p = await padron.obtenerPadron();
+  const vinculadas = (await ies.listarTodas()).filter((i) => i.clave && i.institucion);
+  const porClave = {};
+  vinculadas.forEach((i) => { porClave[claveInstitucion(i)] = i; });
+  const lista = p.lista.map((i) => ({ clave: i.clave, nombre: i.nombre, municipio: i.municipio, departamento: i.departamento, codigo: i.codigo, vinculada: Boolean(porClave[i.clave]) }));
+  vinculadas.forEach((i) => {
+    const clave = claveInstitucion(i);
+    if (!lista.find((x) => x.clave === clave)) lista.push({ clave, nombre: i.institucion.nombre, municipio: i.institucion.municipio, departamento: i.institucion.departamento, codigo: i.institucion.codigo, vinculada: true, declarada: true });
+  });
+  lista.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  return { lista, fuente: p.fuente, porClave };
+}
 
 function telefonoValido(t) { return /^[0-9+\s()-]{7,20}$/.test(t) && (t.replace(/\D/g, "").length >= 7); }
 
@@ -73,10 +96,26 @@ async function invitar(grupo, m) {
   return envio;
 }
 
+/* Coordinador de la institución del grupo. Si el grupo se registró antes de que la IES se
+   vinculara, lo busca por la clave de la institución y deja el vínculo guardado. */
 async function coordinadorDe(grupo) {
-  const inst = await ies.cargarPorId(grupo.iesId);
+  let inst = grupo.iesId ? await ies.cargarPorId(grupo.iesId) : null;
+  if (!inst || !inst.clave) {
+    inst = (await ies.listarTodas()).find((i) => i.clave && claveInstitucion(i) === grupo.ies.clave) || null;
+    if (inst) grupo.iesId = inst.id;
+  }
   if (!inst || !inst.clave) return null;
   return { nombre: inst.datos && inst.datos.responsable_nombre, correo: inst.correo, ies: inst };
+}
+
+async function avisarCoordinador(grupo) {
+  const coord = await coordinadorDe(grupo);
+  if (!coord) { grupo.avisoCoordinadorPendiente = true; return false; }
+  const mensaje = correo.grupoCompletoCoordinador(grupo, coord);
+  const envio = await correo.enviar({ para: coord.correo, asunto: mensaje.asunto, html: mensaje.html });
+  grupo.correos.push({ tipo: "aviso_coordinador", para: coord.correo, fecha: envio.fecha, estado: envio.ok ? "enviado" : "fallido", error: envio.error });
+  grupo.avisoCoordinadorPendiente = !envio.ok;
+  return envio.ok;
 }
 
 /* Si todos confirmaron, cambia el estado y avisa al coordinador (una sola vez por versión del grupo). */
@@ -85,11 +124,7 @@ async function revisarCompletitud(grupo) {
   grupo.estado = "integrantes_confirmados";
   grupo.confirmaciones.integrantes = new Date().toISOString();
   grupos.registrarEvento(grupo, "integrantes_confirmados");
-  const coord = await coordinadorDe(grupo);
-  if (!coord) { grupo.correos.push({ tipo: "aviso_coordinador", fecha: new Date().toISOString(), estado: "fallido", error: "La IES no tiene coordinador con cuenta." }); return; }
-  const mensaje = correo.grupoCompletoCoordinador(grupo, coord);
-  const envio = await correo.enviar({ para: coord.correo, asunto: mensaje.asunto, html: mensaje.html });
-  grupo.correos.push({ tipo: "aviso_coordinador", para: coord.correo, fecha: envio.fecha, estado: envio.ok ? "enviado" : "fallido", error: envio.error });
+  await avisarCoordinador(grupo);
 }
 
 /* Aplica una edición: integrantes nuevos o con correo distinto quedan pendientes y reciben invitación. */
@@ -128,18 +163,18 @@ module.exports = async function (req, res) {
 
     /* ---------- Público ---------- */
     if (req.method === "GET" && accion === "ies") {
-      const todas = await ies.listarTodas();
-      const lista = todas.filter((i) => i.clave && i.institucion).map((i) => ({ id: i.id, nombre: i.institucion.nombre, municipio: i.institucion.municipio, departamento: i.institucion.departamento }))
-        .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+      const { lista, fuente } = await listaInstituciones();
       res.setHeader("Cache-Control", "no-store");
-      return responder(res, 200, { ok: true, ies: lista });
+      return responder(res, 200, { ok: true, fuente, total: lista.length, ies: lista });
     }
 
     if (req.method === "POST" && accion === "registro") {
       const cuerpo = await leerCuerpo(req);
       if (cuerpo._trampa) return error(res, 400, "Solicitud no válida.");
-      const inst = await ies.cargarPorId(texto(cuerpo.iesId, 64));
-      if (!inst || !inst.clave) return error(res, 400, "Seleccione una institución vinculada al Plan.", { campos: ["iesId"] });
+      const { lista, porClave } = await listaInstituciones();
+      const institucion = lista.find((i) => i.clave === texto(cuerpo.iesClave, 120));
+      if (!institucion) return error(res, 400, "Seleccione la institución en la lista.", { campos: ["iesClave"] });
+      const coordinadorActual = porClave[institucion.clave] || null;
       const r = normalizarGrupo(cuerpo);
       if (r.problema) return error(res, 400, r.problema, { campos: r.campos });
       if (cuerpo.acepta !== true && cuerpo.acepta !== "sí" && cuerpo.acepta !== "on") return error(res, 400, "Debe aceptar las reglas de participación del grupo.", { campos: ["acepta"] });
@@ -147,13 +182,13 @@ module.exports = async function (req, res) {
       if (existente && existente.clave && existente.estado !== "cancelado") {
         return error(res, 409, "Ya existe un grupo registrado con el correo de este líder. Ingrese al área de trabajo del grupo.", { existe: true });
       }
-      const grupo = grupos.nuevo({ iesId: inst.id, ies: { nombre: inst.institucion.nombre, clave: inst.institucion.clave, codigo: inst.institucion.codigo }, nombre: r.datos.nombre, area: r.datos.area, lider: r.datos.lider,
+      const grupo = grupos.nuevo({ iesId: coordinadorActual ? coordinadorActual.id : null, ies: { nombre: institucion.nombre, clave: institucion.clave, codigo: institucion.codigo || "", municipio: institucion.municipio, departamento: institucion.departamento }, nombre: r.datos.nombre, area: r.datos.area, lider: r.datos.lider,
         integrantes: r.datos.integrantes.map((m) => Object.assign({}, m, { estado: "pendiente", fechaEstado: new Date().toISOString(), version: 1 })) });
       for (const m of grupo.integrantes) await invitar(grupo, m);
       grupos.registrarEvento(grupo, "invitaciones_enviadas");
       await grupos.guardar(grupo);
       const tokenRegistro = firmarToken({ p: "registro", id: grupo.id, t: "lider" }, 30 * 60);
-      return responder(res, 201, { ok: true, tokenRegistro, correo: grupo.correo, tipo: "lider", invitaciones: grupo.integrantes.map((m) => ({ correo: m.correo, estado: m.invitacion.estado })) });
+      return responder(res, 201, { ok: true, tokenRegistro, correo: grupo.correo, tipo: "lider", coordinadorVinculado: Boolean(grupo.iesId), invitaciones: grupo.integrantes.map((m) => ({ correo: m.correo, estado: m.invitacion.estado })) });
     }
 
     if (accion === "invitacion" || accion === "confirmar") {
@@ -190,7 +225,16 @@ module.exports = async function (req, res) {
 
     if (req.method === "GET") {
       if (sesionIes) {
-        const lista = (await grupos.listarPorIes(coordinadora.id)).sort((a, b) => a.creado < b.creado ? 1 : -1);
+        const clave = claveInstitucion(coordinadora);
+        const lista = (await grupos.listarTodos()).filter((g) => g.iesId === coordinadora.id || (g.ies && g.ies.clave === clave)).sort((a, b) => a.creado < b.creado ? 1 : -1);
+        for (const g of lista) {
+          // Grupos registrados antes de la vinculación del coordinador: se ligan y se envían los avisos pendientes
+          if (g.iesId !== coordinadora.id || g.avisoCoordinadorPendiente) {
+            g.iesId = coordinadora.id;
+            if (g.avisoCoordinadorPendiente && g.estado === "integrantes_confirmados") await avisarCoordinador(g);
+            await grupos.guardar(g);
+          }
+        }
         return responder(res, 200, { ok: true, tipo: "ies", tablero: grupos.tablero(lista), grupos: lista.map(grupos.vistaPublica) });
       }
       const grupo = await grupos.cargarPorId(sesionLider.id);
@@ -202,7 +246,8 @@ module.exports = async function (req, res) {
     let grupo;
     if (sesionIes) {
       grupo = await grupos.cargarPorId(texto(cuerpo.id, 64));
-      if (!grupo || grupo.iesId !== coordinadora.id) return error(res, 404, "El grupo no pertenece a su institución.");
+      if (!grupo || (grupo.iesId !== coordinadora.id && !(grupo.ies && grupo.ies.clave === claveInstitucion(coordinadora)))) return error(res, 404, "El grupo no pertenece a su institución.");
+      grupo.iesId = coordinadora.id;
     } else {
       grupo = await grupos.cargarPorId(sesionLider.id);
       if (!grupo) return error(res, 404, "No se encontró el grupo.");
