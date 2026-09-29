@@ -69,6 +69,17 @@ clave de cualquier cuenta asociada al correo (`portal.html?restablecer=<token>`)
 confirmacion}` la cambia con la sesión abierta. Para la secretaría técnica, el enlace de "solicitar" es también la
 forma de crear la cuenta: solo para los correos de `PPM_SECRETARIA` (por defecto `diego.mazo@ceipa.edu.co`).
 
+Si el buzón del Plan no está disponible, la secretaría técnica puede obtener los mismos enlaces sin correo con la
+clave de administración (`PPM_CLAVE_ADMIN`), abriendo en el navegador:
+
+```
+https://www.planpadrinomilagro.co/api/clave?accion=enlace&correo=<correo de la cuenta>&clave=<PPM_CLAVE_ADMIN>
+```
+
+La respuesta lista, por cada cuenta asociada al correo, el enlace `portal?restablecer=…` (vence en una hora) donde
+la persona crea o restablece su clave. Sirve para crear la cuenta de secretaría y para asistir a empresas, IES o
+líderes que no reciban el correo.
+
 Perfiles y permisos:
 
 | Perfil | Puede |
