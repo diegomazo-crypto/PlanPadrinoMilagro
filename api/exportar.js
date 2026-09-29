@@ -4,19 +4,14 @@
    ?formato=csv devuelve un resumen en CSV; por defecto devuelve JSON completo sin los hashes de clave.
    ?tipo=ies exporta las instituciones vinculadas (una fila por IES) y ?tipo=grupos los grupos que
    apadrinan (una fila por persona en CSV, con el estado de confirmación). */
-const crypto = require("crypto");
 const { responder, error, soloMetodos, sesionActual } = require("../lib/http");
+const { verificarClaveAdmin } = require("../lib/cifrado");
 const empresas = require("../lib/empresas");
 const ies = require("../lib/ies");
 const grupos = require("../lib/grupos");
 
 function autorizado(req) {
-  const esperada = process.env.PPM_CLAVE_ADMIN;
-  if (!esperada || esperada.length < 12) return false;
-  const url = new URL(req.url, "http://x");
-  const dada = req.headers["x-clave-admin"] || url.searchParams.get("clave") || "";
-  const a = Buffer.from(String(dada)), b = Buffer.from(esperada);
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+  return verificarClaveAdmin(req, new URL(req.url, "http://x")).ok;
 }
 
 function csvCelda(v) {
