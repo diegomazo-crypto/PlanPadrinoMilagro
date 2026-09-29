@@ -9,13 +9,12 @@
    PUT {claveActual, clave, confirmacion}: cambia la clave con la sesión abierta.
    La clave no puede coincidir con ningún dato suministrado en la inscripción. */
 const { responder, error, leerCuerpo, soloMetodos, iniciarSesion, sesionCualquiera } = require("../lib/http");
-const { verificarToken, firmarToken, hashClave, verificarClave, normalizarCorreo } = require("../lib/cifrado");
+const { verificarToken, firmarToken, hashClave, verificarClave, normalizarCorreo, verificarClaveAdmin } = require("../lib/cifrado");
 const empresas = require("../lib/empresas");
 const ies = require("../lib/ies");
 const grupos = require("../lib/grupos");
 const secretaria = require("../lib/secretaria");
 const correo = require("../lib/correo");
-const crypto = require("crypto");
 
 const MODULOS = { empresa: empresas, ies, lider: grupos, secretaria };
 const DESTINOS = { empresa: "portal.html", ies: "portal-ies.html", lider: "portal-grupo.html", secretaria: "portal-secretaria.html" };
@@ -92,17 +91,10 @@ async function solicitarEnlace(req, res) {
   responder(res, 200, { ok: true, mensaje: "Si el correo corresponde a una cuenta del Plan, recibirá un enlace para crear o restablecer su clave." });
 }
 
-/* Clave de administración (la misma de /api/exportar), para obtener enlaces sin correo. */
-function autorizadoAdmin(req, url) {
-  const esperada = process.env.PPM_CLAVE_ADMIN || "";
-  if (!esperada || esperada.length < 12) return false;
-  const dada = req.headers["x-clave-admin"] || url.searchParams.get("clave") || "";
-  const a = Buffer.from(String(dada)), b = Buffer.from(esperada);
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
-}
 
 async function enlaceAdmin(req, res, url) {
-  if (!autorizadoAdmin(req, url)) return error(res, 401, "No autorizado.");
+  const v = verificarClaveAdmin(req, url);
+  if (!v.ok) return error(res, 401, "No autorizado: " + v.motivo + ". Compruebe en /api/salud?clave=… el estado de la clave de administración.");
   const correoN = normalizarCorreo(url.searchParams.get("correo") || "");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoN)) return error(res, 400, "Indique un correo válido en ?correo=.");
   const enlaces = await enlacesPara(correoN);
