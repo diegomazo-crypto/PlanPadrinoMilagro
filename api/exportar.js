@@ -5,7 +5,7 @@
    ?tipo=ies exporta las instituciones vinculadas (una fila por IES) y ?tipo=grupos los grupos que
    apadrinan (una fila por persona en CSV, con el estado de confirmación). */
 const crypto = require("crypto");
-const { responder, error, soloMetodos } = require("../lib/http");
+const { responder, error, soloMetodos, sesionActual } = require("../lib/http");
 const empresas = require("../lib/empresas");
 const ies = require("../lib/ies");
 const grupos = require("../lib/grupos");
@@ -75,7 +75,7 @@ async function exportarGrupos(req, res, url) {
 
 module.exports = async function (req, res) {
   if (!soloMetodos(req, res, ["GET"])) return;
-  if (!autorizado(req)) return error(res, 401, "No autorizado.");
+  if (!autorizado(req) && !sesionActual(req, "secretaria")) return error(res, 401, "No autorizado.");
   try {
     const url = new URL(req.url, "http://x");
     if (url.searchParams.get("tipo") === "ies") return exportarIes(req, res, url);

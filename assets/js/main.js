@@ -216,7 +216,7 @@
      está disponible (sitio servido sin funciones), cae al envío por correo. */
   var RUTAS = {
     empresas: { api: "/api/registro", portal: "portal.html", quien: "de empresas" },
-    ies: { api: "/api/ies-registro", portal: "portal-ies.html", quien: "de instituciones" }
+    ies: { api: "/api/ies-registro", portal: "portal.html", quien: "de instituciones" }
   };
 
   function enviarRegistro(form, datos, estado, boton, tipo) {
@@ -246,7 +246,7 @@
         return;
       }
       if (j._estado === 409) {
-        mostrar(estado, "ambar", "<strong>Este correo ya tiene una cuenta.</strong> <a href='" + ruta.portal + "'>Ingrese al portal " + ruta.quien + "</a> con su clave. Si la olvidó, escriba a <a href='mailto:" + CONFIG.CORREO_CONTACTO + "'>" + CONFIG.CORREO_CONTACTO + "</a>.");
+        mostrar(estado, "ambar", "<strong>Este correo ya tiene una cuenta.</strong> <a href='" + ruta.portal + "'>Ingrese al portal</a> con su clave. Si la olvidó o aún no la creó, use en el portal la opción <em>¿Olvidó su clave o aún no la ha creado?</em>.");
         return;
       }
       if (j._estado === 404 || j._estado === 405) { enviarPorCorreo(form, datos, estado); return; }
@@ -280,7 +280,7 @@
         body: JSON.stringify({ tokenRegistro: token, clave: clave, confirmacion: conf })
       }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { j._estado = r.status; return j; }); })
         .then(function (j) {
-          if (j.ok) { window.location.href = j.tipo === "ies" ? "portal-ies.html" : (j.tipo === "lider" ? "portal-grupo.html" : "portal.html"); return; }
+          if (j.ok) { window.location.href = j.destino || "portal.html"; return; }
           mostrar(estado, "rojo", "<strong>" + escapar(j.error || "No fue posible crear la clave.") + "</strong>");
         }).catch(function () { mostrar(estado, "rojo", "No fue posible conectar con el servidor. Intente de nuevo."); })
         .then(function () { boton.disabled = false; boton.textContent = boton.getAttribute("data-texto"); });

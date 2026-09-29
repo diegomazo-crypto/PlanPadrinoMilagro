@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Portal de empresas — Plan Padrino Milagro</title>
-  <meta name="description" content="Portal de las empresas inscritas en el Plan Padrino Milagro: aceptación de compromisos y autodiagnóstico de capacidades empresariales.">
+  <title>Portal — Plan Padrino Milagro</title>
+  <meta name="description" content="Portal único del Plan Padrino Milagro para empresas, grupos universitarios, instituciones y secretaría técnica.">
   <meta name="robots" content="noindex">
-  <link rel="icon" href="assets/img/favicon.png?v=20260923c" type="image/png" sizes="64x64">
-  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20260923c">
+  <link rel="icon" href="assets/img/favicon.png?v=20260929a" type="image/png" sizes="64x64">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png?v=20260929a">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/styles.css?v=20260923c">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260929a">
 </head>
 <body>
 <a class="salto" href="#contenido">Ir al contenido</a>
@@ -20,7 +20,7 @@
   <div class="tricolor" aria-hidden="true"></div>
   <div class="contenedor encabezado__interior">
     <a class="marca" href="index.html">
-      <img class="marca__logo" src="assets/img/PlanMilagro_Logo_Horizontal_Color_v2_202609.png?v=20260923c" alt="Plan Milagro, para reconstrucción productiva" width="220" height="48">
+      <img class="marca__logo" src="assets/img/PlanMilagro_Logo_Horizontal_Color_v2_202609.png?v=20260929a" alt="Plan Milagro, para reconstrucción productiva" width="220" height="48">
     </a>
     <button class="nav-toggle" aria-expanded="false" aria-controls="nav-principal" aria-label="Abrir menú">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -40,16 +40,16 @@
 
   <!-- ===== CARGANDO ===== -->
   <section class="seccion" id="vista-cargando">
-    <div class="contenedor contenedor--texto"><p class="entradilla">Cargando su portal…</p></div>
+    <div class="contenedor contenedor--texto"><p class="entradilla" style="text-align:center">Cargando su portal…</p></div>
   </section>
 
-  <!-- ===== INICIO DE SESIÓN ===== -->
+  <!-- ===== INICIO DE SESIÓN (ÚNICO PARA TODOS LOS PERFILES) ===== -->
   <section class="seccion seccion--gris" id="vista-login" hidden>
     <div class="contenedor">
       <div class="seccion__cabecera seccion__cabecera--centro">
-        <span class="sobretitulo">Portal de empresas</span>
-        <h1 class="portal__titulo">Ingrese con el correo de su interlocutor</h1>
-        <p class="entradilla">Aquí aceptará los compromisos del Plan y diligenciará el autodiagnóstico de capacidades de su empresa. Puede avanzar por pasos y retomarlo cuando quiera.</p>
+        <span class="sobretitulo">Portal del Plan Milagro</span>
+        <h1 class="portal__titulo">Un solo ingreso para empresas, grupos, instituciones y secretaría técnica</h1>
+        <p class="entradilla">Ingrese con el correo con el que se inscribió. Según su correo, lo llevaremos a su espacio: el portal de la empresa, el área de trabajo del grupo, el tablero de la institución o el tablero de la secretaría técnica.</p>
       </div>
       <div class="formulario-envoltura formulario-envoltura--angosta">
         <form class="formulario" id="form-login" novalidate>
@@ -70,11 +70,72 @@
           </fieldset>
           <div class="formulario__acciones">
             <button class="boton boton--primario" type="submit" data-texto="Ingresar">Ingresar</button>
-            <span class="formulario__nota">¿Aún no está inscrito? <a href="empresas.html#inscripcion">Inscriba su empresa</a>.</span>
+            <button class="enlace" type="button" id="login-olvide">¿Olvidó su clave o aún no la ha creado?</button>
           </div>
           <div class="formulario__estado" aria-live="polite"></div>
         </form>
-        <p class="portal__ayuda">¿Es una Institución de Educación Superior? <a href="portal-ies.html">Ingrese al portal de instituciones</a>. Si olvidó su clave, escriba a <a href="mailto:planpadrinomilagro@ceipa.edu.co">planpadrinomilagro@ceipa.edu.co</a> desde el correo registrado.</p>
+
+        <form class="formulario" id="form-solicitar" novalidate hidden>
+          <fieldset>
+            <legend>Crear o restablecer la clave</legend>
+            <p>Le enviaremos a su correo un enlace para crear o restablecer la clave. El enlace vence en una hora.</p>
+            <div class="campos">
+              <div class="campo campo--ancho">
+                <label for="sol-correo">Correo electrónico <span class="req">*</span></label>
+                <input type="email" id="sol-correo" name="correo" required autocomplete="username">
+                <span class="error">Indique un correo válido.</span>
+              </div>
+            </div>
+          </fieldset>
+          <div class="formulario__acciones">
+            <button class="boton boton--primario" type="submit" data-texto="Enviar el enlace">Enviar el enlace</button>
+            <button class="enlace" type="button" id="sol-volver">Volver al ingreso</button>
+          </div>
+          <div class="formulario__estado" aria-live="polite"></div>
+        </form>
+
+        <div class="portal__perfiles">
+          <div><strong>Empresarios</strong><span>Datos de contacto, autodiagnóstico y plan de trabajo.</span><a href="empresas.html#inscripcion">Inscribir mi empresa</a></div>
+          <div><strong>Líderes de grupo</strong><span>Integrantes, empresa apadrinada y plan de trabajo.</span><a href="grupos.html#registro">Registrar un grupo</a></div>
+          <div><strong>Coordinadores de IES</strong><span>Grupos de su institución y aprobación para el emparejamiento.</span><a href="ies.html#inscripcion">Vincular mi institución</a></div>
+          <div><strong>Secretaría técnica</strong><span>Tablero integral del Plan.</span><span class="portal__nota">Solo correos autorizados.</span></div>
+        </div>
+        <p class="portal__ayuda">¿Dudas? Escriba a <a href="mailto:planpadrinomilagro@ceipa.edu.co">planpadrinomilagro@ceipa.edu.co</a>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CREAR O RESTABLECER LA CLAVE DESDE EL ENLACE DEL CORREO ===== -->
+  <section class="seccion seccion--gris" id="vista-restablecer" hidden>
+    <div class="contenedor">
+      <div class="seccion__cabecera seccion__cabecera--centro">
+        <span class="sobretitulo">Clave de acceso</span>
+        <h1 class="portal__titulo">Cree su nueva clave</h1>
+        <p class="entradilla">Mínimo 8 caracteres, con letras y números. No puede ser ni contener datos que suministró en la inscripción.</p>
+      </div>
+      <div class="formulario-envoltura formulario-envoltura--angosta">
+        <form class="formulario" id="form-restablecer" novalidate>
+          <fieldset>
+            <legend>Nueva clave</legend>
+            <div class="campos">
+              <div class="campo campo--ancho">
+                <label for="rest-clave">Nueva clave <span class="req">*</span></label>
+                <input type="password" id="rest-clave" name="clave" required minlength="8" autocomplete="new-password">
+                <span class="error">Mínimo 8 caracteres, con letras y números.</span>
+              </div>
+              <div class="campo campo--ancho">
+                <label for="rest-confirmacion">Confirme la clave <span class="req">*</span></label>
+                <input type="password" id="rest-confirmacion" name="confirmacion" required minlength="8" autocomplete="new-password">
+                <span class="error">Las claves no coinciden.</span>
+              </div>
+            </div>
+          </fieldset>
+          <div class="formulario__acciones">
+            <button class="boton boton--primario" type="submit" data-texto="Guardar la clave e ingresar">Guardar la clave e ingresar</button>
+            <a class="enlace" href="portal.html">Volver al ingreso</a>
+          </div>
+          <div class="formulario__estado" aria-live="polite"></div>
+        </form>
       </div>
     </div>
   </section>
@@ -177,58 +238,203 @@
     </div>
   </section>
 
-  <!-- ===== AUTODIAGNÓSTICO ===== -->
-  <section class="seccion" id="vista-diagnostico" hidden>
-    <div class="contenedor">
-      <div class="diag__cabecera">
-        <div>
-          <span class="sobretitulo">Paso 2 de 2 · Autodiagnóstico</span>
-          <h1 class="portal__titulo">Madurez de las capacidades empresariales</h1>
-          <p class="entradilla">Empresa: <strong id="diag-empresa"></strong>. Su avance se guarda en cada paso; puede salir y retomar más tarde.</p>
+  <!-- ===== PANEL DE LA EMPRESA ===== -->
+  <section class="seccion seccion--gris" id="vista-panel" hidden>
+    <div class="contenedor panel-ies">
+      <div class="panel-ies__cabecera">
+        <span class="sobretitulo">Portal de la empresa</span>
+        <h1 id="pe-nombre"></h1>
+        <p class="panel-ies__meta" id="pe-meta"></p>
+        <div id="pe-grupo"></div>
+      </div>
+
+      <nav class="pestanas" aria-label="Secciones del portal">
+        <button type="button" class="pestana activo" data-pestana="diagnostico">Autodiagnóstico</button>
+        <button type="button" class="pestana" data-pestana="plan">Plan de trabajo</button>
+        <button type="button" class="pestana" data-pestana="datos">Mis datos</button>
+        <button type="button" class="pestana" data-pestana="clave">Clave de acceso</button>
+      </nav>
+
+      <!-- Pestaña: autodiagnóstico por pasos -->
+      <div class="pestana__panel" id="pan-diagnostico">
+        <div id="diag-aviso-actualizacion"></div>
+        <div class="diag__cabecera">
+          <div>
+            <span class="sobretitulo">Autodiagnóstico</span>
+            <h2 class="portal__titulo">Madurez de las capacidades empresariales</h2>
+            <p class="entradilla">Su avance se guarda en cada paso; puede salir y retomar más tarde.</p>
+          </div>
+        </div>
+        <nav class="progreso" aria-label="Avance del autodiagnóstico">
+          <ol id="progreso-lista"></ol>
+          <div class="progreso__barra"><div class="progreso__relleno" id="progreso-relleno"></div></div>
+          <div class="progreso__texto" id="progreso-texto"></div>
+        </nav>
+        <div class="guia" style="margin-top:24px">
+          <aside class="guia__indice diag__escala" aria-label="Escala de madurez">
+            <h3>Escala de madurez</h3>
+            <ol class="escala" id="escala-lista"></ol>
+            <p class="diag__nota">Basada en la escala COBIT®. Responda con evidencia real, no con la intención.</p>
+          </aside>
+          <div class="guia__contenido">
+            <form class="formulario" id="form-diagnostico" novalidate>
+              <div id="diag-contenido"></div>
+              <div class="formulario__acciones diag__acciones">
+                <button class="boton boton--contorno" type="button" id="diag-atras">Atrás</button>
+                <button class="boton boton--primario" type="submit" id="diag-continuar" data-texto="Guardar y continuar">Guardar y continuar</button>
+                <button class="boton boton--contorno" type="button" id="diag-salir">Guardar y salir</button>
+                <button class="boton boton--contorno" type="button" id="diag-volver-resultados" hidden>Guardar y volver a los resultados</button>
+              </div>
+              <div class="formulario__estado" aria-live="polite"></div>
+            </form>
+          </div>
         </div>
       </div>
-      <nav class="progreso" aria-label="Avance del autodiagnóstico">
-        <ol id="progreso-lista"></ol>
-        <div class="progreso__barra"><div class="progreso__relleno" id="progreso-relleno"></div></div>
-        <div class="progreso__texto" id="progreso-texto"></div>
-      </nav>
-      <div class="guia" style="margin-top:24px">
-        <aside class="guia__indice diag__escala" aria-label="Escala de madurez">
-          <h3>Escala de madurez</h3>
-          <ol class="escala" id="escala-lista"></ol>
-          <p class="diag__nota">Basada en la escala COBIT®. Responda con evidencia real, no con la intención.</p>
-        </aside>
-        <div class="guia__contenido">
-          <form class="formulario" id="form-diagnostico" novalidate>
-            <div id="diag-contenido"></div>
-            <div class="formulario__acciones diag__acciones">
-              <button class="boton boton--contorno" type="button" id="diag-atras">Atrás</button>
-              <button class="boton boton--primario" type="submit" id="diag-continuar" data-texto="Guardar y continuar">Guardar y continuar</button>
-              <button class="boton boton--contorno" type="button" id="diag-salir">Guardar y salir</button>
+
+      <!-- Pestaña: resultados del autodiagnóstico -->
+      <div class="pestana__panel" id="pan-resultados" hidden>
+        <div class="seccion__cabecera">
+          <span class="sobretitulo" id="res-version">Autodiagnóstico completado</span>
+          <h2 class="portal__titulo">Resultados de <span id="res-empresa"></span></h2>
+          <p class="entradilla">Este es el punto de partida del acompañamiento. El equipo universitario asignado lo revisará con usted y lo contrastará con evidencias en la primera sesión virtual.</p>
+        </div>
+        <div id="res-pendiente"></div>
+        <div id="res-contenido"></div>
+        <div id="res-informe" class="formulario__estado" aria-live="polite" style="margin-top:20px"></div>
+        <div class="formulario__acciones" style="margin-top:20px">
+          <a class="boton boton--primario" id="res-descargar" href="/api/informe" download>Descargar el informe (PDF)</a>
+          <button class="boton boton--contorno" type="button" id="res-reenviar">Reenviar el informe a mi correo</button>
+          <button class="boton boton--contorno" type="button" id="res-actualizar">Actualizar el autodiagnóstico</button>
+        </div>
+        <div id="res-historial"></div>
+        <p class="portal__ayuda">La información de este autodiagnóstico es confidencial y solo la conocen la secretaría técnica y el grupo universitario que acompañará a su empresa.</p>
+      </div>
+
+      <!-- Pestaña: plan de trabajo -->
+      <div class="pestana__panel" id="pan-plan" hidden>
+        <div class="seccion__cabecera">
+          <span class="sobretitulo">Plan de trabajo</span>
+          <h2 class="portal__titulo">Actividades acordadas con el grupo que apadrina a su empresa</h2>
+          <p class="entradilla">El plan lo construye y actualiza el líder del grupo universitario a partir de las sesiones virtuales. Usted puede consultarlo y descargarlo.</p>
+        </div>
+        <div id="plan-contenido"></div>
+        <div class="formulario__acciones" style="margin-top:20px">
+          <a class="boton boton--primario" id="plan-descargar" href="/api/informe?tipo=plan" download hidden>Descargar el plan de trabajo (PDF)</a>
+        </div>
+      </div>
+
+      <!-- Pestaña: mis datos -->
+      <div class="pestana__panel" id="pan-datos" hidden>
+        <div class="seccion__cabecera">
+          <span class="sobretitulo">Mis datos</span>
+          <h2 class="portal__titulo">Datos de contacto y de la empresa</h2>
+          <p class="entradilla">Puede actualizar los datos de contacto y de la empresa. El correo no se puede cambiar porque es el usuario de la cuenta. Cada actualización queda registrada con su fecha.</p>
+        </div>
+        <div class="formulario-envoltura formulario-envoltura--grupo">
+          <form class="formulario" id="form-datos" novalidate>
+            <fieldset>
+              <legend>Interlocutor responsable</legend>
+              <div class="campos">
+                <div class="campo">
+                  <label for="d-contacto-nombre">Nombre completo <span class="req">*</span></label>
+                  <input type="text" id="d-contacto-nombre" name="contacto_nombre" required>
+                  <span class="error">Indique el nombre.</span>
+                </div>
+                <div class="campo">
+                  <label for="d-contacto-cargo">Cargo <span class="req">*</span></label>
+                  <input type="text" id="d-contacto-cargo" name="contacto_cargo" required>
+                  <span class="error">Indique el cargo.</span>
+                </div>
+                <div class="campo">
+                  <label for="d-contacto-telefono">Teléfono móvil <span class="req">*</span></label>
+                  <input type="tel" id="d-contacto-telefono" name="contacto_telefono" required>
+                  <span class="error">Indique un teléfono válido.</span>
+                </div>
+                <div class="campo">
+                  <label for="d-contacto-correo">Correo electrónico (usuario de la cuenta)</label>
+                  <input type="email" id="d-contacto-correo" name="contacto_correo" readonly>
+                  <span class="ayuda">No se puede cambiar. Si necesita cambiarlo, escriba a la secretaría técnica.</span>
+                </div>
+              </div>
+            </fieldset>
+            <fieldset>
+              <legend>Empresa</legend>
+              <div class="campos">
+                <div class="campo campo--ancho">
+                  <label for="d-empresa">Nombre de la empresa o negocio <span class="req">*</span></label>
+                  <input type="text" id="d-empresa" name="empresa" required>
+                  <span class="error">Indique el nombre.</span>
+                </div>
+                <div class="campo campo--ancho">
+                  <label for="d-direccion">Dirección</label>
+                  <input type="text" id="d-direccion" name="direccion">
+                </div>
+                <div class="campo">
+                  <label for="d-estado-operativo">Estado operativo actual <span class="req">*</span></label>
+                  <select id="d-estado-operativo" name="estado_operativo" required>
+                    <option value="">Seleccione…</option>
+                    <option>Cerrada</option>
+                    <option>Operando parcialmente</option>
+                    <option>Operando con normalidad</option>
+                    <option>Reabierta tras cierre total</option>
+                  </select>
+                  <span class="error">Seleccione el estado.</span>
+                </div>
+                <div class="campo">
+                  <label for="d-empleos-actuales">Empleos actuales</label>
+                  <input type="number" id="d-empleos-actuales" name="empleos_actuales" min="0">
+                </div>
+                <div class="campo campo--ancho">
+                  <label for="d-reto">Principal reto que quisiera resolver</label>
+                  <textarea id="d-reto" name="reto_principal" rows="3"></textarea>
+                </div>
+              </div>
+            </fieldset>
+            <div class="ficha" id="d-fijos"></div>
+            <div class="formulario__acciones">
+              <button class="boton boton--primario" type="submit" data-texto="Guardar cambios">Guardar cambios</button>
+            </div>
+            <div class="formulario__estado" aria-live="polite"></div>
+          </form>
+        </div>
+        <div id="d-historial"></div>
+      </div>
+
+      <!-- Pestaña: clave de acceso -->
+      <div class="pestana__panel" id="pan-clave" hidden>
+        <div class="seccion__cabecera">
+          <span class="sobretitulo">Clave de acceso</span>
+          <h2 class="portal__titulo">Cambiar la clave</h2>
+        </div>
+        <div class="formulario-envoltura formulario-envoltura--angosta">
+          <form class="formulario" id="form-cambiar-clave" novalidate>
+            <fieldset>
+              <legend>Nueva clave</legend>
+              <div class="campos">
+                <div class="campo campo--ancho">
+                  <label for="c-actual">Clave actual <span class="req">*</span></label>
+                  <input type="password" id="c-actual" name="claveActual" required autocomplete="current-password">
+                  <span class="error">Indique su clave actual.</span>
+                </div>
+                <div class="campo campo--ancho">
+                  <label for="c-clave">Nueva clave <span class="req">*</span></label>
+                  <input type="password" id="c-clave" name="clave" required minlength="8" autocomplete="new-password">
+                  <span class="error">Mínimo 8 caracteres, con letras y números.</span>
+                </div>
+                <div class="campo campo--ancho">
+                  <label for="c-confirmacion">Confirme la nueva clave <span class="req">*</span></label>
+                  <input type="password" id="c-confirmacion" name="confirmacion" required minlength="8" autocomplete="new-password">
+                  <span class="error">Las claves no coinciden.</span>
+                </div>
+              </div>
+            </fieldset>
+            <div class="formulario__acciones">
+              <button class="boton boton--primario" type="submit" data-texto="Cambiar la clave">Cambiar la clave</button>
             </div>
             <div class="formulario__estado" aria-live="polite"></div>
           </form>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- ===== RESULTADOS ===== -->
-  <section class="seccion" id="vista-resultados" hidden>
-    <div class="contenedor contenedor--texto">
-      <div class="seccion__cabecera">
-        <span class="sobretitulo">Autodiagnóstico completado</span>
-        <h1 class="portal__titulo">Resultados de <span id="res-empresa"></span></h1>
-        <p class="entradilla">Este es el punto de partida del acompañamiento. El equipo universitario asignado lo revisará con usted y lo contrastará con evidencias en la primera sesión.</p>
-      </div>
-      <div id="res-contenido"></div>
-      <div id="res-informe" class="formulario__estado" aria-live="polite" style="margin-top:20px"></div>
-      <div class="formulario__acciones" style="margin-top:20px">
-        <a class="boton boton--primario" id="res-descargar" href="/api/informe" download>Descargar el informe (PDF)</a>
-        <button class="boton boton--contorno" type="button" id="res-reenviar">Reenviar el informe a mi correo</button>
-        <a class="boton boton--contorno" href="index.html">Volver al inicio</a>
-      </div>
-      <p class="portal__ayuda">La información de este autodiagnóstico es confidencial y solo la conocen la secretaría técnica y la IES que acompañará a su empresa.</p>
     </div>
   </section>
 
@@ -240,7 +446,7 @@
     <div class="pie__interior">
       <div>
         <a class="marca" href="index.html">
-          <img class="marca__logo marca__logo--pie" src="assets/img/PlanMilagro_Logo_Mono_Blanco_v2_202609.png?v=20260923c" alt="Plan Milagro, para reconstrucción productiva">
+          <img class="marca__logo marca__logo--pie" src="assets/img/PlanMilagro_Logo_Mono_Blanco_v2_202609.png?v=20260929a" alt="Plan Milagro, para reconstrucción productiva">
         </a>
         <p>Plan Padrino Milagro (Plan Milagro): iniciativa del sistema de educación superior colombiano, convocada por la Institución Universitaria CEIPA, ACIET, ASIESCA, ASCUN, Diálogos de Futuro, la Fundación Empresarios por la Educación y Connect. CEIPA ejerce la secretaría técnica inicial.</p>
       </div>
@@ -268,9 +474,10 @@
   </div>
 </footer>
 
-<script src="assets/js/config.js?v=20260923c"></script>
-<script src="assets/js/instrumento.js?v=20260923c"></script>
-<script src="assets/js/main.js?v=20260923c"></script>
-<script src="assets/js/portal.js?v=20260923c"></script>
+<script src="assets/js/config.js?v=20260929a"></script>
+<script src="assets/js/instrumento.js?v=20260929a"></script>
+<script src="assets/js/plan.js?v=20260929a"></script>
+<script src="assets/js/main.js?v=20260929a"></script>
+<script src="assets/js/portal.js?v=20260929a"></script>
 </body>
 </html>

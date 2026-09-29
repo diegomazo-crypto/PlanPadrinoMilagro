@@ -17,8 +17,8 @@
     MIN_INTEGRANTES: 1,
     ESTADOS: {
       registrado: "Registrado: esperando la confirmación de los integrantes",
-      integrantes_confirmados: "Integrantes confirmados: pendiente de confirmación del coordinador",
-      confirmado: "Confirmado por la institución: listo para la asignación de empresa",
+      integrantes_confirmados: "Integrantes confirmados: pendiente de aprobación del coordinador",
+      confirmado: "Aprobado por la institución: listo para la asignación de empresa",
       asignado: "Asignado a una empresa",
       cancelado: "Cancelado"
     },

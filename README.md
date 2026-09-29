@@ -12,11 +12,12 @@ afectadas por el terremoto del 10 de agosto de 2026.
 | `empresas.html` | Guía de participación para empresas y formulario de inscripción. |
 | `ies.html` | Guía de participación para IES, estudiantes y docentes y formulario de vinculación institucional. |
 | `recursos.html` | Documentos descargables, estructura del formato común de reporte, enlaces, preguntas frecuentes y contacto. |
-| `portal.html` | Portal de empresas: inicio de sesión, aceptación del compromiso y los términos, autodiagnóstico por pasos y resultados. |
-| `portal-ies.html` | Portal de instituciones: tablero de control del coordinador (grupos, personas, confirmaciones, edición y cancelación). |
+| `portal.html` | **Portal único de ingreso** (empresas, líderes de grupo, coordinadores de IES y secretaría técnica; redirige según el correo), creación y restablecimiento de la clave, y portal de la empresa: aceptación, autodiagnóstico (con actualizaciones), plan de trabajo, datos de contacto y clave. |
+| `portal-ies.html` | Portal de instituciones: tablero de control del coordinador (grupos, personas, confirmaciones, edición, aprobación y cancelación). |
+| `portal-secretaria.html` | Tablero integral de la secretaría técnica: empresas, grupos, instituciones, edición de coordinadores y emparejamiento grupo–empresa. |
 | `grupos.html` | Registro de un grupo que apadrina por su líder, con hasta cuatro integrantes, y creación de la clave. |
 | `confirmar.html` | Confirmación de participación de un integrante desde el enlace recibido por correo. |
-| `portal-grupo.html` | Área de trabajo del grupo (líder): estado de las confirmaciones, reenvío de invitaciones y edición. |
+| `portal-grupo.html` | Área de trabajo del grupo (líder): confirmaciones e integrantes, empresa apadrinada (solo lectura), plan de trabajo y clave. |
 
 ## Estructura
 
@@ -36,8 +37,10 @@ afectadas por el terremoto del 10 de agosto de 2026.
 │   ├── js/main.js          Menú, índice lateral, validación y envío de formularios
 │   ├── js/instrumento.js   Instrumento de autodiagnóstico (modelo CRL), usado en navegador y servidor
 │   ├── js/ies-snies.js     Padrón de respaldo de IES activas (SNIES), usado en navegador y servidor
-│   ├── js/portal.js        Lógica del portal de empresas
+│   ├── js/portal.js        Ingreso único, claves y portal de la empresa
 │   ├── js/portal-ies.js    Tablero del coordinador de la IES
+│   ├── js/portal-secretaria.js Tablero integral de la secretaría técnica
+│   ├── js/plan.js          Plan de trabajo: tabla de consulta y editor (compartido)
 │   ├── js/grupos.js        Registro de grupos (líder)
 │   ├── js/grupo-editor.js  Editor compartido de grupo (líder y coordinador)
 │   ├── js/portal-grupo.js  Área de trabajo del grupo
@@ -52,6 +55,29 @@ afectadas por el terremoto del 10 de agosto de 2026.
 Las páginas públicas son estáticas. El portal de empresas usa las funciones de `api/`, que corren en
 Vercel sin proceso de construcción.
 
+## Portal único e ingreso por perfil
+
+Todos los perfiles ingresan por `portal.html` con su correo y su clave. `POST /api/sesion` busca la cuenta entre
+la secretaría técnica, las empresas, los coordinadores de IES y los líderes de grupo, abre la sesión del perfil
+cuya clave coincide y devuelve `destino`: `portal.html` (empresa), `portal-grupo.html` (líder),
+`portal-ies.html` (coordinador) o `portal-secretaria.html` (secretaría). Las demás páginas remiten al portal
+único cuando no hay sesión. La asesoría del Plan es **únicamente virtual**; los formularios ya no piden modalidad.
+
+Claves (`/api/clave`): `POST {tokenRegistro, clave, confirmacion}` crea la clave tras el registro o la restablece
+desde el enlace del correo; `POST ?accion=solicitar {correo}` envía un enlace (1 hora) para crear o restablecer la
+clave de cualquier cuenta asociada al correo (`portal.html?restablecer=<token>`); `PUT {claveActual, clave,
+confirmacion}` la cambia con la sesión abierta. Para la secretaría técnica, el enlace de "solicitar" es también la
+forma de crear la cuenta: solo para los correos de `PPM_SECRETARIA` (por defecto `diego.mazo@ceipa.edu.co`).
+
+Perfiles y permisos:
+
+| Perfil | Puede |
+|---|---|
+| **Empresario** | Ver y actualizar sus datos de contacto y de la empresa (excepto el correo), con constancia de cada actualización (`GET/PUT /api/registro`); cambiar la clave; actualizar el autodiagnóstico total o parcialmente con constancia (`PUT /api/diagnostico` registra los factores cambiados; `POST` recalcula y genera una nueva versión del informe); ver y descargar el plan de trabajo (`GET /api/grupos?accion=plan`, `GET /api/informe?tipo=plan`). |
+| **Líder de grupo** | Integrantes e invitaciones; ver la inscripción y el autodiagnóstico de la empresa apadrinada (solo lectura) y descargar el informe (`GET /api/informe`); construir el plan de trabajo cuando el grupo está asignado (`PUT /api/grupos?accion=plan`): actividad, descripción, fecha esperada, responsable (empresario o integrante) y resultado, con la fecha de actualización de cada campo. |
+| **Coordinador de IES** | Tablero de grupos de su institución (aprobados, pendientes de aprobar, personas); editar y cambiar integrantes; aprobar el grupo para el emparejamiento; cancelar. |
+| **Secretaría técnica** | Tablero integral (`GET /api/secretaria?vista=resumen`): todas las empresas con inscripción y diagnóstico (`?vista=empresa&id=`, PDF en `/api/informe?id=`), instituciones con total de grupos y participantes, edición de los datos del coordinador (`PUT ?vista=ies`), grupos (`?vista=grupo&id=`), emparejamiento (`POST ?accion=asignar {grupoId, empresaId}` y `?accion=desasignar`, con correo al líder y a la empresa) y exportaciones. |
+
 ## Portal de empresas y datos cifrados
 
 Flujo de una empresa:
@@ -63,7 +89,11 @@ Flujo de una empresa:
    acompañamiento y confidencialidad. Si la empresa no acepta, el proceso termina y se le agradece.
 3. **Autodiagnóstico** de madurez de capacidades (modelo CRL): 5 capacidades, 46 factores en escala 0–5
    y datos de desempeño. Se guarda paso a paso; la empresa puede salir y retomar donde quedó.
-4. **Resultados** ponderados por capacidad y globales, con nivel y recomendación.
+4. **Resultados** ponderados por capacidad y globales, con nivel y recomendación. Después, la empresa puede
+   **actualizar** el autodiagnóstico: cada cambio guardado queda registrado (fecha y factores) y, al recorrer el
+   instrumento hasta el final, se recalculan los resultados, sube la versión y se envía un nuevo informe.
+5. **Plan de trabajo**: cuando la secretaría técnica asigna un grupo, la empresa ve su grupo padrino y consulta o
+   descarga el plan que el líder construye.
 
 Almacenamiento: un archivo por empresa en Vercel Blob (acceso privado), cifrado con AES-256-GCM antes de
 guardarse. Las claves de acceso se guardan con hash scrypt. Las sesiones son cookies firmadas (HttpOnly).
@@ -79,7 +109,7 @@ Flujo de una IES:
 2. **Clave de acceso** con las mismas reglas que las empresas; recibe el correo de confirmación de la cuenta.
 3. **Tablero de control** (`portal-ies.html`): cuántos grupos se han registrado y en qué estado, cuántas personas
    participan y cuántas han confirmado. El coordinador puede editar la información de un grupo, cambiar
-   integrantes, confirmar un grupo o cancelarlo.
+   integrantes, **aprobar** un grupo para el emparejamiento o cancelarlo.
 
 Flujo de un grupo (`grupos.html`):
 
@@ -91,17 +121,22 @@ Flujo de un grupo (`grupos.html`):
 2. Cada integrante recibe un **correo con un enlace personal** (30 días) para confirmar o declinar su participación
    (`confirmar.html`). El líder ve el estado de cada uno, puede reenviar invitaciones y reemplazar a quien no pueda.
 3. Cuando **todos confirman**, el coordinador de la IES recibe por correo el grupo completo con todos los datos y lo
-   **confirma** en el tablero. El líder recibe el aviso y el grupo queda listo para la asignación de empresa. Si la
+   **aprueba** en el tablero. El líder recibe el aviso y el grupo queda listo para la asignación de empresa. Si la
    IES aún no tiene coordinador, el grupo queda ligado a la institución por su clave del padrón y el aviso se envía
    cuando el coordinador se vincula y abre su tablero.
 
-Estados del grupo: `registrado` → `integrantes_confirmados` → `confirmado` → `asignado`, o `cancelado`.
+4. La **secretaría técnica** empareja el grupo aprobado con una empresa desde su tablero; líder y empresa reciben
+   un correo con los datos de contacto y el líder abre el **plan de trabajo**.
+
+Estados del grupo: `registrado` → `integrantes_confirmados` → `confirmado` (aprobado) → `asignado`, o `cancelado`.
 Los grupos se guardan cifrados en `grupos/<id>.json` (id derivado del correo del líder); las IES en `ies/<id>.json`.
-Las sesiones llevan el tipo de cuenta (`empresa`, `ies`, `lider`) dentro del token firmado.
+Las sesiones llevan el tipo de cuenta (`empresa`, `ies`, `lider`, `secretaria`) dentro del token firmado; la
+secretaría se guarda en `secretaria/<id>.json`.
 
 API: `GET /api/grupos?accion=ies` (padrón SNIES más IES declaradas, con marca de vinculada), `POST ?accion=registro`, `GET ?accion=invitacion&token=`,
 `POST ?accion=confirmar`, y con sesión: `GET` (tablero o grupo propio), `PUT` (editar), `POST ?accion=reenviar`,
-`POST ?accion=confirmar-grupo` y `POST ?accion=cancelar` (solo coordinador).
+`POST ?accion=confirmar-grupo` (aprobar) y `POST ?accion=cancelar` (solo coordinador); plan de trabajo: `GET ?accion=plan`
+(líder o empresa) y `PUT ?accion=plan` (líder, grupo asignado).
 
 ### Padrón de IES activas (SNIES)
 
@@ -124,20 +159,26 @@ La respuesta de `/api/ies-padron` indica en `fuente` cuál de las tres se está 
 
 ## Correos automáticos e informe de autodiagnóstico
 
-El portal envía dos correos desde el buzón del Plan (`planpadrinomilagro@ceipa.edu.co`):
+El portal envía estos correos desde el buzón del Plan (`planpadrinomilagro@ceipa.edu.co`):
 
 1. **Confirmación de cuenta**, al crear la clave (empresas, IES y líderes de grupo): usuario, enlace al portal y próximos pasos.
    Los grupos generan además: invitación a cada integrante, aviso al coordinador cuando todos confirman, y avisos al
    líder cuando el coordinador confirma o cancela el grupo.
 2. **Informe de autodiagnóstico**, al finalizar el diagnóstico: correo a la empresa con el informe en PDF
-   adjunto y copia al buzón del Plan, para compartirlo con la IES madrina.
+   adjunto y copia al buzón del Plan, para compartirlo con la IES madrina. Cada nueva versión del
+   autodiagnóstico genera y envía un nuevo informe.
+3. **Clave de acceso**: enlace para crear o restablecer la clave (opción "¿Olvidó su clave?" del portal).
+4. **Emparejamiento**: aviso al líder (con los datos de la empresa) y a la empresa (con los del grupo) cuando la
+   secretaría técnica los asigna.
 
 El informe (modelo CRL: resultado global, capacidades, factor por factor con observaciones y datos de
 desempeño) se archiva cifrado en `informes/<id>.json` y se puede descargar:
 
 ```
 /api/informe                          → la empresa, con su sesión (botón "Descargar el informe" en el portal)
-/api/informe?id=<id>&clave=<admin>    → la secretaría técnica, cualquier empresa (el id aparece en /api/exportar)
+/api/informe?id=<id>                  → la secretaría técnica (con su sesión, o ?clave=<admin>), cualquier empresa
+/api/informe                          → el líder del grupo asignado, el informe de su empresa apadrinada
+/api/informe?tipo=plan                → plan de trabajo en PDF (empresa, líder; secretaría con &grupo=<id>)
 POST /api/informe                     → la empresa reenvía el informe a su correo
 ```
 
@@ -170,7 +211,8 @@ Vercel se marcan como no enviados sin afectar el flujo.
 | `BLOB_STORE_ID` o `BLOB_READ_WRITE_TOKEN` | Se crean solas al conectar un almacén Blob al proyecto (Storage → almacén → Connect Project). Las conexiones recientes usan la identidad del proyecto y solo definen `BLOB_STORE_ID`; el código admite ambos mecanismos. | Guardar y leer los archivos cifrados. |
 | `PPM_CLAVE_CIFRADO` | `openssl rand -hex 32` (64 caracteres hexadecimales). | Clave de cifrado de los registros. **Si se pierde, los datos no se pueden recuperar.** Guárdela en un gestor de secretos. |
 | `PPM_SECRETO_SESION` | `openssl rand -hex 32`. | Firma de las cookies de sesión. |
-| `PPM_CLAVE_ADMIN` | Una contraseña larga (mínimo 12 caracteres). | Autoriza la exportación de datos para la secretaría técnica. |
+| `PPM_CLAVE_ADMIN` | Una contraseña larga (mínimo 12 caracteres). | Autoriza la exportación de datos por URL (alternativa a la sesión de la secretaría técnica). |
+| `PPM_SECRETARIA` | Correos autorizados de la secretaría técnica, separados por comas. Opcional. | Quién puede crear la cuenta de secretaría técnica desde "¿Olvidó su clave?". Por defecto `diego.mazo@ceipa.edu.co`. |
 
 Después de definirlas hay que **redesplegar** el proyecto para que las funciones las tomen.
 
@@ -190,8 +232,9 @@ https://www.planpadrinomilagro.co/api/exportar?tipo=grupos&formato=csv → grupo
 https://www.planpadrinomilagro.co/api/exportar?tipo=ies | ?tipo=grupos → JSON completo
 ```
 
-Envíe la clave de administración en la cabecera `x-clave-admin` (por ejemplo con `curl -H`) o como
-parámetro `?clave=`. La exportación nunca incluye los hashes de las claves de acceso.
+Con la sesión de la secretaría técnica abierta, los botones del tablero (`portal-secretaria.html`) descargan
+estos archivos directamente. Sin sesión, envíe la clave de administración en la cabecera `x-clave-admin`
+(por ejemplo con `curl -H`) o como parámetro `?clave=`. La exportación nunca incluye los hashes de las claves de acceso.
 
 ### Pruebas locales
 

@@ -11,11 +11,15 @@
      POST ?accion=reenviar                 {id?, correo} reenvía la invitación a un integrante pendiente
    Solo la IES coordinadora:
      POST ?accion=confirmar-grupo          {id} confirma el grupo (todos los integrantes confirmados)
-     POST ?accion=cancelar                 {id, motivo} cancela el grupo */
+     POST ?accion=cancelar                 {id, motivo} cancela el grupo
+   Plan de trabajo (grupo asignado a una empresa):
+     GET  ?accion=plan                     líder: su plan · empresa: el plan de su grupo padrino
+     PUT  ?accion=plan                     líder: {actividades:[{id?, actividad, descripcion, fechaEsperada, responsable, resultado}]} */
 const { responder, error, leerCuerpo, soloMetodos, sesionActual, texto } = require("../lib/http");
 const { normalizarCorreo, firmarToken, verificarToken } = require("../lib/cifrado");
 const grupos = require("../lib/grupos");
 const ies = require("../lib/ies");
+const empresas = require("../lib/empresas");
 const padron = require("../lib/ies-padron");
 const correo = require("../lib/correo");
 const CAT = require("../assets/js/catalogo-grupos.js");
@@ -94,6 +98,25 @@ async function invitar(grupo, m) {
   grupo.correos = grupo.correos || [];
   grupo.correos.push({ tipo: "invitacion_integrante", para: m.correo, fecha: envio.fecha, estado: m.invitacion.estado, error: envio.error });
   return envio;
+}
+
+/* Datos de la empresa apadrinada que ve el líder: inscripción, autodiagnóstico y resultados (solo lectura). */
+function vistaEmpresaParaGrupo(empresa) {
+  const d = empresa.diagnostico || {};
+  return {
+    id: empresa.id, correo: empresa.correo, estado: empresa.estado, datos: empresa.datos,
+    diagnostico: { completado: d.completado, finalizado: d.finalizado, version: d.version || (d.completado ? 1 : 0), resultados: d.resultados, respuestas: d.respuestas, observaciones: d.observaciones, extras: d.extras, actualizaciones: d.actualizaciones || [] },
+    informe: empresa.informe ? { generado: empresa.informe.generado, nombre: empresa.informe.nombre } : null
+  };
+}
+
+function resumenPlan(grupo, empresa) {
+  return {
+    plan: grupo.plan || { actividades: [], actualizado: null },
+    grupo: { id: grupo.id, nombre: grupo.nombre, area: grupo.area, ies: grupo.ies, estado: grupo.estado, lider: grupo.lider, integrantes: grupo.integrantes.map((m) => ({ nombre: m.nombre, vinculacion: m.vinculacion, correo: m.correo, telefono: m.telefono, estado: m.estado })) },
+    empresa: empresa ? { id: empresa.id, nombre: empresa.datos && empresa.datos.empresa, interlocutor: empresa.datos && empresa.datos.contacto_nombre, correo: empresa.correo, frente: empresa.datos && empresa.datos.frente_prioritario } : null,
+    responsables: [{ tipo: "empresario", nombre: (empresa && empresa.datos && empresa.datos.contacto_nombre) || "Empresario" }, { tipo: "lider", nombre: grupo.lider.nombre }].concat(grupo.integrantes.map((m) => ({ tipo: "integrante", nombre: m.nombre })))
+  };
 }
 
 /* Coordinador de la institución del grupo. Si el grupo se registró antes de que la IES se
@@ -213,6 +236,18 @@ module.exports = async function (req, res) {
       return responder(res, 200, Object.assign({ ok: true, grupoCompleto: grupo.estado !== "registrado" }, vista));
     }
 
+    /* ---------- Plan de trabajo visto por la empresa ---------- */
+    if (accion === "plan" && req.method === "GET") {
+      const sesionEmpresa = sesionActual(req, "empresa");
+      if (sesionEmpresa) {
+        const empresa = await empresas.cargarPorId(sesionEmpresa.id);
+        if (!empresa || !empresa.grupoAsignado) return responder(res, 200, { ok: true, asignado: false });
+        const grupo = await grupos.cargarPorId(empresa.grupoAsignado.id);
+        if (!grupo) return responder(res, 200, { ok: true, asignado: false });
+        return responder(res, 200, Object.assign({ ok: true, asignado: true }, resumenPlan(grupo, empresa)));
+      }
+    }
+
     /* ---------- Con sesión ---------- */
     const sesionIes = sesionActual(req, "ies"), sesionLider = sesionActual(req, "lider");
     if (!sesionIes && !sesionLider) return error(res, 401, "Inicie sesión en el área de trabajo del grupo o en el portal de instituciones.");
@@ -239,7 +274,9 @@ module.exports = async function (req, res) {
       }
       const grupo = await grupos.cargarPorId(sesionLider.id);
       if (!grupo) return error(res, 404, "No se encontró el grupo.");
-      return responder(res, 200, { ok: true, tipo: "lider", grupo: grupos.vistaPublica(grupo) });
+      const empresa = grupo.empresaAsignada ? await empresas.cargarPorId(grupo.empresaAsignada.id) : null;
+      if (accion === "plan") return responder(res, 200, Object.assign({ ok: true, asignado: Boolean(empresa) }, empresa ? resumenPlan(grupo, empresa) : { plan: grupo.plan }));
+      return responder(res, 200, { ok: true, tipo: "lider", grupo: grupos.vistaPublica(grupo), empresa: empresa ? vistaEmpresaParaGrupo(empresa) : null });
     }
 
     const cuerpo = await leerCuerpo(req);
@@ -253,6 +290,20 @@ module.exports = async function (req, res) {
       if (!grupo) return error(res, 404, "No se encontró el grupo.");
     }
     if (grupo.estado === "cancelado" && !(sesionIes && accion === "")) return error(res, 409, "El grupo está cancelado.");
+
+    if (req.method === "PUT" && accion === "plan") {
+      if (!sesionLider) return error(res, 403, "Solo el líder del grupo edita el plan de trabajo.");
+      if (grupo.estado !== "asignado" || !grupo.empresaAsignada) return error(res, 409, "El plan de trabajo se construye cuando el grupo tiene una empresa asignada.");
+      const empresa = await empresas.cargarPorId(grupo.empresaAsignada.id);
+      const actividades = Array.isArray(cuerpo.actividades) ? cuerpo.actividades.slice(0, 60) : [];
+      const nombres = resumenPlan(grupo, empresa).responsables.map((r) => r.nombre);
+      const invalidas = actividades.filter((a) => a && texto(a.actividad, 300) && a.responsable && !nombres.includes(texto(a.responsable, 300)));
+      if (invalidas.length) return error(res, 400, "El responsable debe ser el empresario o un integrante del grupo.", { campos: ["responsable"] });
+      grupos.aplicarPlan(grupo, actividades, texto);
+      grupos.registrarEvento(grupo, "plan_actualizado");
+      await grupos.guardar(grupo);
+      return responder(res, 200, Object.assign({ ok: true, asignado: true }, resumenPlan(grupo, empresa)));
+    }
 
     if (req.method === "PUT") {
       if (sesionLider && !["registrado", "integrantes_confirmados"].includes(grupo.estado)) return error(res, 409, "El grupo ya fue confirmado por la institución; pida los cambios al coordinador.");

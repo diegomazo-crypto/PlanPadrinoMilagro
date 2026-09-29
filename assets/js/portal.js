@@ -1,17 +1,18 @@
 /* =========================================================
-   Portal de empresas — Plan Padrino Milagro
-   Inicio de sesión, aceptación de compromisos y autodiagnóstico por pasos.
+   Portal único — Plan Padrino Milagro
+   Ingreso para todos los perfiles (redirige según el correo), creación y restablecimiento
+   de la clave, y portal de la empresa: aceptación de compromisos, autodiagnóstico por pasos
+   (con actualizaciones registradas), plan de trabajo, datos de contacto y clave.
    ========================================================= */
 (function () {
   "use strict";
   var I = window.PPM_INSTRUMENTO;
   var CAPS = I.CAPACIDADES;
-  var PASO_RESULTADOS = CAPS.length + 1;
-  var estado = { empresa: null, diagnostico: null, paso: 0, sucio: false };
+  var estado = { empresa: null, diagnostico: null, paso: 0, sucio: false, actualizando: false, pestana: "diagnostico" };
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
-  var vistas = ["cargando", "login", "aceptacion", "declinado", "diagnostico", "resultados"];
+  var vistas = ["cargando", "login", "restablecer", "aceptacion", "declinado", "panel"];
 
   function mostrar(nombre) {
     vistas.forEach(function (v) { var el = $("#vista-" + v); if (el) el.hidden = v !== nombre; });
@@ -22,6 +23,8 @@
   function escapar(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
   }
+  function fecha(iso) { return iso ? String(iso).slice(0, 10) : ""; }
+  function fechaHora(iso) { return iso ? String(iso).slice(0, 16).replace("T", " ") : ""; }
 
   function aviso(contenedor, tono, html) {
     if (!contenedor) return;
@@ -32,21 +35,30 @@
     var opciones = { method: metodo, headers: { "Accept": "application/json" }, credentials: "same-origin" };
     if (cuerpo !== undefined) { opciones.headers["Content-Type"] = "application/json"; opciones.body = JSON.stringify(cuerpo); }
     return fetch(ruta, opciones).then(function (r) {
-      return r.json().catch(function () { return {}; }).then(function (datos) { datos._estado = r.status; if (!r.ok) throw datos; return datos; });
+      return r.json().catch(function () { return {}; }).then(function (j) { j._estado = r.status; if (!r.ok) throw j; return j; });
     });
   }
 
-  function ocupado(form, si) {
+  function ocupado(form, si, textoOcupado) {
     var b = form.querySelector("button[type=submit]");
     if (!b) return;
     b.disabled = si;
-    b.textContent = si ? "Guardando…" : (b.getAttribute("data-texto") || b.textContent);
+    b.textContent = si ? (textoOcupado || "Guardando…") : (b.getAttribute("data-texto") || b.textContent);
   }
 
   /* ---------- Arranque ---------- */
   function arrancar() {
-    api("GET", "/api/sesion").then(function (r) { estado.empresa = r.empresa; enrutar(); })
-      .catch(function () { estado.empresa = null; mostrar("login"); });
+    var params = new URLSearchParams(window.location.search);
+    var token = params.get("restablecer");
+    if (token) {
+      $("#form-restablecer").setAttribute("data-token", token);
+      $("#boton-salir").hidden = true;
+      return mostrar("restablecer");
+    }
+    api("GET", "/api/sesion").then(function (r) {
+      if (r.tipo !== "empresa") { window.location.href = r.destino || "portal.html"; return; }
+      estado.empresa = r.empresa; enrutar();
+    }).catch(function () { estado.empresa = null; mostrar("login"); });
   }
 
   function enrutar() {
@@ -65,26 +77,79 @@
       }
       return mostrar("aceptacion");
     }
-    if (e.estado === "aceptado" || e.estado === "diagnostico_completado") return cargarDiagnostico();
+    if (e.estado === "aceptado" || e.estado === "diagnostico_completado") return abrirPanel();
     mostrar("login");
   }
 
-  /* ---------- Inicio y cierre de sesión ---------- */
+  /* ---------- Inicio, cierre y claves ---------- */
   $("#form-login").addEventListener("submit", function (ev) {
     ev.preventDefault();
     var form = ev.target, est = $(".formulario__estado", form);
     var correo = form.correo.value.trim(), clave = form.clave.value;
     if (!correo || !clave) { aviso(est, "rojo", "Indique su correo y su clave."); return; }
-    ocupado(form, true); aviso(est, "", "");
+    ocupado(form, true, "Ingresando…"); aviso(est, "", "");
     api("POST", "/api/sesion", { correo: correo, clave: clave })
-      .then(function (r) { estado.empresa = r.empresa; form.reset(); enrutar(); })
-      .catch(function (e) { aviso(est, "rojo", escapar(e.error || "No fue posible iniciar sesión.")); })
+      .then(function (r) {
+        if (r.tipo !== "empresa") { window.location.href = r.destino; return; }
+        estado.empresa = r.empresa; form.reset(); enrutar();
+      })
+      .catch(function (e) {
+        if (e.sinCuenta) aviso(est, "rojo", "<strong>" + escapar(e.error) + "</strong> Si ya se inscribió y aún no tiene clave, use la opción <em>¿Olvidó su clave o aún no la ha creado?</em>.");
+        else aviso(est, "rojo", escapar(e.error || "No fue posible iniciar sesión."));
+      })
+      .then(function () { ocupado(form, false); });
+  });
+
+  $("#login-olvide").addEventListener("click", function () {
+    $("#form-login").hidden = true; $("#form-solicitar").hidden = false;
+    $("#sol-correo").value = $("#login-correo").value; $("#sol-correo").focus();
+  });
+  $("#sol-volver").addEventListener("click", function () { $("#form-solicitar").hidden = true; $("#form-login").hidden = false; });
+
+  $("#form-solicitar").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var form = ev.target, est = $(".formulario__estado", form), correo = form.correo.value.trim();
+    form.correo.closest(".campo").classList.toggle("invalido", !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo));
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return;
+    ocupado(form, true, "Enviando…"); aviso(est, "", "");
+    api("POST", "/api/clave?accion=solicitar", { correo: correo })
+      .then(function (r) { aviso(est, "verde", "<strong>Revise su correo.</strong> " + escapar(r.mensaje || "")); })
+      .catch(function (e) { aviso(est, "rojo", escapar(e.error || "No fue posible enviar el enlace.")); })
+      .then(function () { ocupado(form, false); });
+  });
+
+  function validarNuevaClave(form, clave, conf) {
+    var ok = clave.length >= 8 && /[a-zA-Z]/.test(clave) && /[0-9]/.test(clave);
+    form.clave.closest(".campo").classList.toggle("invalido", !ok);
+    form.confirmacion.closest(".campo").classList.toggle("invalido", conf !== clave);
+    return ok && conf === clave;
+  }
+
+  $("#form-restablecer").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var form = ev.target, est = $(".formulario__estado", form);
+    if (!validarNuevaClave(form, form.clave.value, form.confirmacion.value)) return;
+    ocupado(form, true); aviso(est, "", "");
+    api("POST", "/api/clave", { tokenRegistro: form.getAttribute("data-token"), clave: form.clave.value, confirmacion: form.confirmacion.value })
+      .then(function (r) { window.location.href = r.destino || "portal.html"; })
+      .catch(function (e) { aviso(est, "rojo", "<strong>" + escapar(e.error || "No fue posible guardar la clave.") + "</strong>" + (e._estado === 401 ? " <a href='portal.html'>Solicite un nuevo enlace</a>." : "")); ocupado(form, false); });
+  });
+
+  $("#form-cambiar-clave").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var form = ev.target, est = $(".formulario__estado", form);
+    form.claveActual.closest(".campo").classList.toggle("invalido", !form.claveActual.value);
+    if (!form.claveActual.value || !validarNuevaClave(form, form.clave.value, form.confirmacion.value)) return;
+    ocupado(form, true); aviso(est, "", "");
+    api("PUT", "/api/clave", { claveActual: form.claveActual.value, clave: form.clave.value, confirmacion: form.confirmacion.value })
+      .then(function () { form.reset(); aviso(est, "verde", "<strong>Clave actualizada.</strong> Úsela en su próximo ingreso."); })
+      .catch(function (e) { aviso(est, "rojo", escapar(e.error || "No fue posible cambiar la clave.")); })
       .then(function () { ocupado(form, false); });
   });
 
   $("#boton-salir").addEventListener("click", function () {
     var seguir = function () { api("DELETE", "/api/sesion").then(function () { estado.empresa = null; estado.diagnostico = null; mostrar("login"); }); };
-    if (estado.sucio && !$("#vista-diagnostico").hidden) guardarPaso(false).then(seguir, seguir); else seguir();
+    if (estado.sucio && !$("#vista-panel").hidden && !$("#pan-diagnostico").hidden) guardarPaso(false).then(seguir, seguir); else seguir();
   });
 
   /* ---------- Aceptaciones ---------- */
@@ -127,17 +192,49 @@
     });
   });
 
+  /* ---------- Panel de la empresa ---------- */
+  function abrirPanel() {
+    pintarCabecera();
+    mostrar("panel");
+    return cargarDiagnostico();
+  }
+
+  function pintarCabecera() {
+    var e = estado.empresa;
+    $("#pe-nombre").textContent = e.empresa || "Su empresa";
+    $("#pe-meta").textContent = "Interlocutor: " + (e.contacto || "") + " · " + e.correo;
+    var g = e.grupoAsignado;
+    $("#pe-grupo").innerHTML = g
+      ? "<div class='aviso aviso--verde'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='10'/><path d='M8 12l3 3 5-6'/></svg><div><strong>Grupo padrino asignado:</strong> " + escapar(g.nombre) + " (" + escapar(g.ies) + ") · " + escapar(g.area) + ".<br>Líder: " + escapar(g.lider.nombre) + " · <a href='mailto:" + escapar(g.lider.correo) + "'>" + escapar(g.lider.correo) + "</a> · " + escapar(g.lider.telefono) + ". Asignado el " + fecha(g.fecha) + ".</div></div>"
+      : "<p class='panel-ies__meta'>Aún no tiene grupo universitario asignado. La secretaría técnica le avisará por correo cuando se realice el emparejamiento.</p>";
+  }
+
+  function pestana(nombre) {
+    estado.pestana = nombre;
+    $$(".pestana").forEach(function (b) { b.classList.toggle("activo", b.getAttribute("data-pestana") === nombre); });
+    var visible = nombre === "diagnostico" ? (estado.diagnostico && estado.diagnostico.completado && !estado.actualizando ? "resultados" : "diagnostico") : nombre;
+    ["diagnostico", "resultados", "plan", "datos", "clave"].forEach(function (p) { $("#pan-" + p).hidden = p !== visible; });
+    if (nombre === "plan") cargarPlan();
+    if (nombre === "datos") cargarDatos();
+  }
+  $$(".pestana").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var ir = function () { pestana(b.getAttribute("data-pestana")); };
+      if (estado.sucio && !$("#pan-diagnostico").hidden) guardarPaso(false).then(ir, ir); else ir();
+    });
+  });
+
   /* ---------- Autodiagnóstico ---------- */
   function cargarDiagnostico() {
-    api("GET", "/api/diagnostico").then(function (r) {
+    return api("GET", "/api/diagnostico").then(function (r) {
       estado.diagnostico = r.diagnostico;
       estado.empresa = r.empresa;
-      if (r.diagnostico.completado) return mostrarResultados(r.diagnostico.resultados);
+      pintarCabecera();
+      if (r.diagnostico.completado) { estado.actualizando = false; mostrarResultados(r.diagnostico.resultados); return; }
       estado.paso = Math.min(r.diagnostico.paso || 0, CAPS.length);
-      $("#diag-empresa").textContent = estado.empresa.empresa || "";
       pintarEscala();
       pintarPaso();
-      mostrar("diagnostico");
+      pestana("diagnostico");
     }).catch(function (e) { window.alert(e.error || "No fue posible cargar el autodiagnóstico."); mostrar("login"); });
   }
 
@@ -277,7 +374,7 @@
     var ultimo = estado.paso === CAPS.length;
     guardarPaso(!ultimo).then(function () {
       if (!ultimo) { estado.paso += 1; pintarPaso(); return; }
-      return api("POST", "/api/diagnostico", { finalizar: true }).then(function (r) { estado.diagnostico = r.diagnostico; estado.empresa = r.empresa; mostrarResultados(r.diagnostico.resultados); });
+      return api("POST", "/api/diagnostico", { finalizar: true }).then(function (r) { estado.diagnostico = r.diagnostico; estado.empresa = r.empresa; estado.actualizando = false; pintarCabecera(); mostrarResultados(r.diagnostico.resultados); });
     }).catch(function (e) {
       if (e.pendientes) { aviso(est, "rojo", "Faltan factores por responder: " + escapar(e.pendientes.join(", ")) + ". Use la barra de avance para volver a esa capacidad."); }
       else aviso(est, "rojo", escapar(e.error || "No fue posible guardar. Revise su conexión e intente de nuevo."));
@@ -294,10 +391,30 @@
       aviso($(".formulario__estado", $("#form-login")), "verde", "<strong>Su avance quedó guardado.</strong> Cuando vuelva a ingresar continuará desde el paso en que lo dejó.");
     }).catch(function (e) { aviso(est, "rojo", escapar(e.error || "No fue posible guardar.")); });
   });
+  $("#diag-volver-resultados").addEventListener("click", function () {
+    var form = $("#form-diagnostico"), est = $(".formulario__estado", form);
+    guardarPaso(false).then(function () { estado.actualizando = false; mostrarResultados(estado.diagnostico.resultados); })
+      .catch(function (e) { aviso(est, "rojo", escapar(e.error || "No fue posible guardar.")); });
+  });
+
+  /* Actualización de un autodiagnóstico ya finalizado: se recorre de nuevo el instrumento con las
+     respuestas actuales; cada cambio guardado queda registrado y los resultados se recalculan al final. */
+  $("#res-actualizar").addEventListener("click", function () {
+    estado.actualizando = true;
+    estado.paso = 1;
+    pintarEscala();
+    pintarPaso();
+    aviso($("#diag-aviso-actualizacion"), "info", "<strong>Está actualizando el autodiagnóstico (versión actual: " + (estado.diagnostico.version || 1) + ").</strong> Puede cambiar uno o varios factores; cada cambio guardado queda registrado con su fecha. Al llegar al final y pulsar <em>Guardar y ver resultados</em> se recalculan los resultados y se genera una nueva versión del informe.");
+    $("#diag-volver-resultados").hidden = false;
+    $("#diag-salir").hidden = true;
+    pestana("diagnostico");
+  });
 
   /* ---------- Resultados ---------- */
   function mostrarResultados(r) {
+    var d = estado.diagnostico;
     $("#res-empresa").textContent = (estado.empresa && estado.empresa.empresa) || "su empresa";
+    $("#res-version").textContent = "Autodiagnóstico completado · versión " + (d.version || 1) + (d.finalizado ? " · " + fecha(d.finalizado) : "");
     var html = "<div class='res__global'><div class='res__num'>" + r.global.toFixed(2) + "<span>/ 5</span></div><div><div class='res__nivel'>Nivel global: " + escapar(r.nivelGlobal) + "</div><div class='diag__nota'>Promedio de las cinco capacidades, cada una ponderada según el modelo CRL.</div></div></div>";
     html += "<div class='res__lista'>" + r.capacidades.map(function (c) {
       var pct = Math.round(c.ponderado / 5 * 100);
@@ -309,8 +426,17 @@
       r.capacidades.map(function (c) { return "<tr><td>" + escapar(c.nombre) + "</td><td>" + c.ponderado.toFixed(2) + "</td><td>" + c.promedio.toFixed(2) + "</td><td>" + escapar(c.nivel) + "</td></tr>"; }).join("") +
       "</tbody></table></div>";
     $("#res-contenido").innerHTML = html;
+    var pendientes = (d.actualizaciones || []).filter(function (a) { return !a.aplicada; });
+    aviso($("#res-pendiente"), pendientes.length ? "ambar" : "", pendientes.length ? "<strong>Tiene cambios guardados que aún no se reflejan en estos resultados</strong> (última actualización: " + fechaHora(pendientes[pendientes.length - 1].fecha) + "). Pulse <em>Actualizar el autodiagnóstico</em> y recorra el instrumento hasta el final para recalcularlos." : "");
+    var hist = d.actualizaciones || [];
+    $("#res-historial").innerHTML = hist.length
+      ? "<h3 style='margin-bottom:6px'>Constancia de actualizaciones</h3><ul class='historial'>" + hist.slice().reverse().map(function (a) { return "<li>" + fechaHora(a.fecha) + " · " + (a.factores && a.factores.length ? a.factores.length + " factor(es): " + escapar(a.factores.join(", ")) : "datos complementarios") + (a.aplicada ? " · aplicada en la versión " + a.version : " · pendiente de recalcular") + "</li>"; }).join("") + "</ul>"
+      : "";
     pintarInforme();
-    mostrar("resultados");
+    $("#diag-volver-resultados").hidden = true;
+    $("#diag-salir").hidden = false;
+    aviso($("#diag-aviso-actualizacion"), "", "");
+    pestana("diagnostico");
   }
 
   function pintarInforme() {
@@ -318,7 +444,7 @@
     if (!inf) { aviso(cont, "info", "El informe en PDF se genera al descargarlo con el botón de abajo."); return; }
     if (inf.error) { aviso(cont, "ambar", escapar(inf.error) + " Puede intentar descargarlo de nuevo."); return; }
     if (inf.correo && inf.correo.estado === "enviado") {
-      aviso(cont, "verde", "<strong>Informe archivado y enviado a " + escapar(inf.correo.para) + ".</strong> La secretaría técnica recibió copia para compartirlo con la institución que apadrinará a su empresa.");
+      aviso(cont, "verde", "<strong>Informe archivado y enviado a " + escapar(inf.correo.para) + ".</strong> La secretaría técnica recibió copia para compartirlo con el grupo que apadrinará a su empresa.");
     } else {
       aviso(cont, "ambar", "<strong>El informe quedó archivado, pero no fue posible enviarlo por correo.</strong> Descárguelo con el botón de abajo o intente reenviarlo.");
     }
@@ -331,6 +457,51 @@
       .then(function (r) { estado.empresa = r.empresa; pintarInforme(); })
       .catch(function (e) { if (e.empresa) estado.empresa = e.empresa; aviso(cont, "rojo", "<strong>" + escapar(e.error || "No fue posible reenviar el informe.") + "</strong>" + (e.causa ? " (" + escapar(e.causa) + ")" : "")); })
       .then(function () { b.disabled = false; b.textContent = "Reenviar el informe a mi correo"; });
+  });
+
+  /* ---------- Plan de trabajo (solo lectura para la empresa) ---------- */
+  function cargarPlan() {
+    var cont = $("#plan-contenido");
+    cont.innerHTML = "<p class='entradilla'>Cargando…</p>";
+    api("GET", "/api/grupos?accion=plan").then(function (r) {
+      if (!r.asignado) { $("#plan-descargar").hidden = true; cont.innerHTML = "<div class='grupos__vacio'><strong>Aún no hay plan de trabajo.</strong><br>Se construirá cuando la secretaría técnica asigne el grupo universitario que acompañará a su empresa.</div>"; return; }
+      $("#plan-descargar").hidden = false;
+      cont.innerHTML = window.PPM_PLAN.tablaHtml(r.plan, r.grupo, r.empresa);
+    }).catch(function (e) { cont.innerHTML = ""; aviso(cont, "rojo", escapar(e.error || "No fue posible cargar el plan.")); });
+  }
+
+  /* ---------- Mis datos ---------- */
+  var FIJOS = [["tipo_identificacion", "Tipo de identificación"], ["nit", "Número"], ["tamano", "Tamaño"], ["sector", "Sector"], ["anios_operacion", "Años de operación"], ["departamento", "Departamento"], ["municipio", "Municipio"], ["camara_comercio", "Registro en cámara de comercio"], ["camara_nombre", "Cámara"], ["empleos_antes", "Empleos antes del terremoto"], ["tipo_afectacion", "Tipo de afectación"], ["frente_prioritario", "Frente prioritario"], ["disponibilidad", "Disponibilidad"]];
+  function cargarDatos() {
+    var form = $("#form-datos");
+    api("GET", "/api/registro").then(function (r) {
+      var d = r.datos || {};
+      ["contacto_nombre", "contacto_cargo", "contacto_telefono", "contacto_correo", "empresa", "direccion", "estado_operativo", "empleos_actuales", "reto_principal"].forEach(function (k) { if (form[k]) form[k].value = d[k] || ""; });
+      $("#d-fijos").innerHTML = "<div class='ficha__k' style='grid-column:1/-1'>Otros datos de la inscripción (para cambiarlos, escriba a la secretaría técnica)</div>" + FIJOS.filter(function (f) { return d[f[0]]; }).map(function (f) {
+        var v = d[f[0]]; return "<div><span class='ficha__k'>" + escapar(f[1]) + "</span><span class='ficha__v'>" + escapar(Array.isArray(v) ? v.join(", ") : v) + "</span></div>";
+      }).join("");
+      pintarHistorialDatos(r.empresa);
+    }).catch(function (e) { aviso($(".formulario__estado", form), "rojo", escapar(e.error || "No fue posible cargar sus datos.")); });
+  }
+  function pintarHistorialDatos(e) {
+    var h = (e && e.actualizacionesDatos) || [];
+    $("#d-historial").innerHTML = h.length ? "<h3 style='margin-bottom:6px'>Constancia de actualizaciones</h3><ul class='historial'>" + h.slice().reverse().map(function (a) { return "<li>" + fechaHora(a.fecha) + " · campos: " + escapar((a.campos || []).join(", ")) + "</li>"; }).join("") + "</ul>" : "";
+  }
+  $("#form-datos").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var form = ev.target, est = $(".formulario__estado", form), ok = true;
+    ["contacto_nombre", "contacto_cargo", "contacto_telefono", "empresa", "estado_operativo"].forEach(function (k) { var falta = !form[k].value.trim(); form[k].closest(".campo").classList.toggle("invalido", falta); if (falta) ok = false; });
+    if (!ok) { aviso(est, "rojo", "Complete los campos obligatorios."); return; }
+    var carga = {};
+    ["contacto_nombre", "contacto_cargo", "contacto_telefono", "empresa", "direccion", "estado_operativo", "empleos_actuales", "reto_principal"].forEach(function (k) { carga[k] = form[k].value.trim(); });
+    ocupado(form, true); aviso(est, "", "");
+    api("PUT", "/api/registro", carga)
+      .then(function (r) {
+        estado.empresa = r.empresa; pintarCabecera(); pintarHistorialDatos(r.empresa);
+        aviso(est, "verde", r.cambiados && r.cambiados.length ? "<strong>Datos actualizados</strong> (" + escapar(r.cambiados.join(", ")) + "). Quedó constancia de la fecha." : "No hubo cambios que guardar.");
+      })
+      .catch(function (e) { aviso(est, "rojo", "<strong>" + escapar(e.error || "No fue posible guardar.") + "</strong>" + (e.campos ? " Campos: " + escapar(e.campos.join(", ")) : "")); })
+      .then(function () { ocupado(form, false); });
   });
 
   arrancar();
