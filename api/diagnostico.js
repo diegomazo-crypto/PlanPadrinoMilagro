@@ -1,6 +1,9 @@
 "use strict";
 /* /api/diagnostico — GET estado y respuestas; PUT guarda un paso (parcial);
-   POST finaliza y calcula los resultados. Cada empresa solo accede a su propio registro. */
+   POST finaliza y calcula los resultados. Cada empresa solo accede a su propio registro.
+   Un autodiagnóstico finalizado puede actualizarse total o parcialmente: cada cambio queda con
+   constancia (fecha y factores modificados) y al volver a finalizar se genera una nueva versión
+   de los resultados y del informe. */
 const { responder, error, leerCuerpo, soloMetodos, sesionActual } = require("../lib/http");
 const empresas = require("../lib/empresas");
 const instrumento = require("../assets/js/instrumento.js");
@@ -66,14 +69,15 @@ module.exports = async function (req, res) {
     const cuerpo = await leerCuerpo(req);
 
     if (req.method === "PUT") {
-      if (d.completado) return error(res, 409, "El autodiagnóstico ya fue finalizado.");
+      const antes = JSON.stringify({ r: d.respuestas, e: d.extras, o: d.observaciones });
+      const cambiados = new Set();
       const respuestas = cuerpo.respuestas || {};
       Object.keys(respuestas).forEach((codigo) => {
         if (!CODIGOS.has(codigo)) return;
         const v = respuestas[codigo];
-        if (v === null || v === "") { delete d.respuestas[codigo]; return; }
+        if (v === null || v === "") { if (codigo in d.respuestas) cambiados.add(codigo); delete d.respuestas[codigo]; return; }
         const n = Number(v);
-        if (Number.isInteger(n) && n >= 0 && n <= 5) d.respuestas[codigo] = n;
+        if (Number.isInteger(n) && n >= 0 && n <= 5) { if (d.respuestas[codigo] !== n) cambiados.add(codigo); d.respuestas[codigo] = n; }
       });
       const observaciones = cuerpo.observaciones || {};
       Object.keys(observaciones).forEach((codigo) => {
@@ -100,22 +104,41 @@ module.exports = async function (req, res) {
         const p = Number(cuerpo.paso);
         if (Number.isInteger(p) && p >= 0 && p <= PASOS_MAX) d.paso = p;
       }
-      empresas.registrarEvento(empresa, "diagnostico_guardado_paso_" + d.paso);
+      if (d.completado) {
+        // Constancia de la actualización de un autodiagnóstico ya finalizado
+        const despues = JSON.stringify({ r: d.respuestas, e: d.extras, o: d.observaciones });
+        if (antes !== despues) {
+          d.actualizaciones = d.actualizaciones || [];
+          d.actualizaciones.push({ fecha: new Date().toISOString(), factores: Array.from(cambiados), paso: d.paso, aplicada: false });
+          d.enActualizacion = true;
+          empresas.registrarEvento(empresa, "diagnostico_actualizado_paso_" + d.paso);
+        }
+      } else {
+        empresas.registrarEvento(empresa, "diagnostico_guardado_paso_" + d.paso);
+      }
       await empresas.guardar(empresa);
       return responder(res, 200, { ok: true, diagnostico: d });
     }
 
-    // POST: finalizar
+    // POST: finalizar (primera vez o nueva versión tras una actualización)
     const resultados = instrumento.calcular(d.respuestas);
     if (!resultados.completo) {
       return error(res, 400, "Faltan factores por responder.", { pendientes: resultados.pendientes });
     }
+    const esActualizacion = Boolean(d.completado);
+    if (esActualizacion) {
+      d.versionesAnteriores = d.versionesAnteriores || [];
+      d.versionesAnteriores.push({ version: d.version || 1, finalizado: d.finalizado, global: d.resultados && d.resultados.global, nivelGlobal: d.resultados && d.resultados.nivelGlobal });
+      (d.actualizaciones || []).forEach((a) => { if (!a.aplicada) { a.aplicada = true; a.version = (d.version || 1) + 1; } });
+    }
     d.resultados = resultados;
     d.completado = true;
+    d.enActualizacion = false;
+    d.version = esActualizacion ? (d.version || 1) + 1 : 1;
     d.finalizado = new Date().toISOString();
     d.paso = PASOS_MAX;
     empresa.estado = "diagnostico_completado";
-    empresas.registrarEvento(empresa, "diagnostico_finalizado");
+    empresas.registrarEvento(empresa, esActualizacion ? "diagnostico_actualizado_version_" + d.version : "diagnostico_finalizado");
     await empresas.guardar(empresa);
 
     // Informe en PDF: se archiva cifrado (para la secretaría y la IES madrina) y se envía por correo.

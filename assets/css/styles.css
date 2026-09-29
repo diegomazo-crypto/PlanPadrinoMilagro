@@ -688,3 +688,40 @@ td ul { margin: 0; padding-left: 1.1em; }
 .grupo__personas .quien small { display: block; color: var(--gris-500); }
 .grupo__acciones { flex-wrap: wrap; }
 .grupo--ancho { grid-column: 1 / -1; }
+
+/* ---------- Portal único: perfiles, pestañas, fichas y plan de trabajo ---------- */
+.portal__perfiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 28px; }
+.portal__perfiles > div { background: #fff; border: 1px solid var(--borde); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; font-size: 0.9rem; }
+.portal__perfiles strong { color: var(--marino); }
+.portal__perfiles span { color: var(--gris-texto); }
+.portal__perfiles a { font-weight: 700; }
+.portal__nota { font-size: 0.82rem; }
+.pestanas { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 2px solid var(--borde); }
+.pestana { background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -2px; padding: 10px 16px; font: inherit; font-weight: 700; color: var(--gris-texto); cursor: pointer; }
+.pestana.activo { color: var(--azul); border-bottom-color: var(--azul); }
+.pestana:hover { color: var(--marino); }
+.pestana__panel { display: grid; gap: 18px; }
+.ficha { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 18px; background: var(--fondo-claro); border-radius: var(--radio); padding: 14px 16px; font-size: 0.92rem; margin: 6px 0 14px; }
+.ficha div { display: grid; gap: 2px; }
+.ficha dt, .ficha .ficha__k { color: var(--gris-500); font-weight: 700; font-size: 0.8rem; }
+.ficha dd, .ficha .ficha__v { margin: 0; color: var(--marino); }
+.ficha--blanca { background: #fff; border: 1px solid var(--borde); }
+.historial { margin: 0; padding-left: 1.2em; font-size: 0.88rem; color: var(--gris-texto); }
+.plan-tabla th, .plan-tabla td { vertical-align: top; }
+.plan-tabla td small { display: block; color: var(--gris-500); font-size: 0.78rem; margin-top: 4px; }
+.plan-editor { display: grid; gap: 12px; }
+.actividad { display: grid; grid-template-columns: 1.3fr 1.6fr 0.9fr 1fr 1.3fr auto; gap: 8px; align-items: start; padding: 12px; background: var(--fondo-claro); border-radius: var(--radio-sm); }
+.actividad label { font-size: 0.78rem; font-weight: 700; color: var(--gris-500); display: block; margin-bottom: 3px; }
+.actividad input, .actividad select, .actividad textarea { font: inherit; font-size: 0.9rem; padding: 8px 10px; border: 1px solid var(--gris-300); border-radius: 8px; width: 100%; background: #fff; }
+.actividad small { display: block; color: var(--gris-500); font-size: 0.74rem; margin-top: 3px; }
+@media (max-width: 1000px) { .actividad { grid-template-columns: 1fr 1fr; } .actividad .actividad__quitar { grid-column: 1 / -1; } }
+.tablero__seccion { display: grid; gap: 12px; }
+.tablero__seccion h2 { margin: 0; font-size: 1.2rem; }
+.acciones-linea { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.acciones-linea select { font: inherit; font-size: 0.9rem; padding: 6px 8px; border: 1px solid var(--gris-300); border-radius: 8px; background: #fff; max-width: 320px; }
+.modal { position: fixed; inset: 0; background: rgba(8, 54, 106, .55); display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow: auto; z-index: 50; }
+.modal__caja { background: #fff; border-radius: 16px; max-width: 980px; width: 100%; padding: clamp(18px, 3vw, 28px); box-shadow: var(--sombra); display: grid; gap: 14px; }
+.modal__cabecera { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.modal__cabecera h2 { margin: 0; font-size: 1.3rem; }
+.modal__cerrar { background: none; border: 1px solid var(--gris-300); border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; }
+.filtro-texto { font: inherit; padding: 8px 10px; border: 1px solid var(--gris-300); border-radius: 8px; background: #fff; min-width: 220px; }

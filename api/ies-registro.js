@@ -12,7 +12,7 @@ const CAMPOS_TEXTO = [
   "equipos_estimados", "estudiantes_estimados", "docentes_estimados", "periodo_inicio", "programas",
   "experiencia", "comentarios"
 ];
-const CAMPOS_LISTA = ["redes", "frentes", "modalidad", "territorios", "mecanismo"];
+const CAMPOS_LISTA = ["redes", "frentes", "territorios", "mecanismo"];
 const OBLIGATORIOS = ["responsable_nombre", "responsable_cargo", "responsable_correo", "responsable_telefono",
   "equipos_estimados", "periodo_inicio", "programas"];
 
@@ -32,7 +32,6 @@ module.exports = async function (req, res) {
     CAMPOS_LISTA.forEach((k) => { datos[k] = lista(cuerpo[k]); });
     const faltantes = OBLIGATORIOS.filter((k) => !datos[k]);
     if (!datos.frentes.length) faltantes.push("frentes");
-    if (!datos.modalidad.length) faltantes.push("modalidad");
     if (!datos.mecanismo.length) faltantes.push("mecanismo");
     if (faltantes.length) return error(res, 400, "Faltan campos obligatorios.", { campos: faltantes });
 

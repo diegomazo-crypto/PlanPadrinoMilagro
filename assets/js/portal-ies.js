@@ -1,4 +1,5 @@
-/* Portal de instituciones (coordinador): tablero de control y gestión de los grupos que apadrinan. */
+/* Portal de instituciones (coordinador): tablero de control, edición y aprobación de los grupos que apadrinan.
+   El ingreso se hace desde el portal único (portal.html). */
 (function () {
   "use strict";
   var E = window.PPM_EDITOR_GRUPO, CAT = window.PPM_GRUPOS;
@@ -24,25 +25,32 @@
   /* ---------- Sesión ---------- */
   function arrancar() {
     api("GET", "/api/sesion").then(function (r) {
-      if (r.tipo !== "ies") { estado.ies = null; mostrar("login"); return; }
+      if (r.tipo !== "ies") { window.location.href = r.destino || "portal.html"; return; }
       estado.ies = r.ies; return cargarGrupos().then(function () { pintarCabecera(); mostrar("panel"); });
     }).catch(function () { estado.ies = null; mostrar("login"); });
   }
   function cargarGrupos() {
     return api("GET", "/api/grupos").then(function (r) { estado.grupos = r.grupos; estado.tablero = r.tablero; pintarTablero(); pintarGrupos(); });
   }
-  $("#form-login").addEventListener("submit", function (ev) {
+  $("#boton-salir").addEventListener("click", function () { api("DELETE", "/api/sesion").then(function () { estado.ies = null; estado.grupos = []; window.location.href = "portal.html"; }); });
+
+  /* ---------- Clave ---------- */
+  $("#ies-clave-abrir").addEventListener("click", function () { $("#ies-clave").hidden = false; $("#ies-clave").scrollIntoView({ behavior: "smooth" }); });
+  $("#ies-clave-cerrar").addEventListener("click", function () { $("#ies-clave").hidden = true; });
+  $("#form-cambiar-clave").addEventListener("submit", function (ev) {
     ev.preventDefault();
-    var form = ev.target, est = $(".formulario__estado", form);
-    var correo = form.correo.value.trim(), clave = form.clave.value;
-    if (!correo || !clave) { aviso(est, "rojo", "Indique su correo y su clave."); return; }
-    ocupado(form, true); aviso(est, "", "");
-    api("POST", "/api/sesion", { correo: correo, clave: clave, tipo: "ies" })
-      .then(function (r) { estado.ies = r.ies; form.reset(); return cargarGrupos().then(function () { pintarCabecera(); mostrar("panel"); }); })
-      .catch(function (e) { aviso(est, "rojo", escapar(e.error || "No fue posible iniciar sesión.")); })
-      .then(function () { ocupado(form, false); });
+    var f = ev.target, est = $(".formulario__estado", f), clave = f.clave.value, conf = f.confirmacion.value;
+    var ok = clave.length >= 8 && /[a-zA-Z]/.test(clave) && /[0-9]/.test(clave);
+    f.claveActual.closest(".campo").classList.toggle("invalido", !f.claveActual.value);
+    f.clave.closest(".campo").classList.toggle("invalido", !ok);
+    f.confirmacion.closest(".campo").classList.toggle("invalido", conf !== clave);
+    if (!f.claveActual.value || !ok || conf !== clave) return;
+    ocupado(f, true); aviso(est, "", "");
+    api("PUT", "/api/clave", { claveActual: f.claveActual.value, clave: clave, confirmacion: conf })
+      .then(function () { f.reset(); aviso(est, "verde", "<strong>Clave actualizada.</strong>"); })
+      .catch(function (e) { aviso(est, "rojo", escapar(e.error || "No fue posible cambiar la clave.")); })
+      .then(function () { ocupado(f, false); });
   });
-  $("#boton-salir").addEventListener("click", function () { api("DELETE", "/api/sesion").then(function () { estado.ies = null; estado.grupos = []; mostrar("login"); }); });
 
   /* ---------- Tablero ---------- */
   function pintarCabecera() {
@@ -58,8 +66,8 @@
       tarjeta(t.activos, "grupos activos" + (t.porEstado.cancelado ? " (" + t.porEstado.cancelado + " cancelados)" : "")) +
       tarjeta(t.personasTotal, "personas participando (líderes e integrantes)") +
       tarjeta(t.personasConfirmadas, "personas confirmadas") +
-      tarjeta(t.porEstado.integrantes_confirmados || 0, "grupos listos para su confirmación", (t.porEstado.integrantes_confirmados || 0) > 0) +
-      tarjeta(t.porEstado.confirmado || 0, "grupos confirmados") +
+      tarjeta(t.porEstado.integrantes_confirmados || 0, "grupos pendientes de aprobar", (t.porEstado.integrantes_confirmados || 0) > 0) +
+      tarjeta((t.porEstado.confirmado || 0) + (t.porEstado.asignado || 0), "grupos aprobados" + (t.porEstado.asignado ? " (" + t.porEstado.asignado + " con empresa)" : "")) +
       tarjeta(t.integrantesPendientes, "integrantes sin confirmar", t.integrantesPendientes > 0);
   }
 
@@ -78,15 +86,15 @@
       var acciones = "";
       if (g.estado !== "cancelado") {
         acciones += "<button class='boton boton--contorno boton--peq' type='button' data-editar='" + escapar(g.id) + "'>Editar / cambiar integrantes</button>";
-        if (g.estado === "integrantes_confirmados") acciones += "<button class='boton boton--primario boton--peq' type='button' data-confirmar='" + escapar(g.id) + "'>Confirmar el grupo</button>";
-        if (g.estado === "registrado") acciones += "<button class='boton boton--primario boton--peq' type='button' data-confirmar='" + escapar(g.id) + "' disabled title='Faltan integrantes por confirmar'>Confirmar el grupo</button>";
+        if (g.estado === "integrantes_confirmados") acciones += "<button class='boton boton--primario boton--peq' type='button' data-confirmar='" + escapar(g.id) + "'>Aprobar el grupo</button>";
+        if (g.estado === "registrado") acciones += "<button class='boton boton--primario boton--peq' type='button' data-confirmar='" + escapar(g.id) + "' disabled title='Faltan integrantes por confirmar'>Aprobar el grupo</button>";
         acciones += "<button class='boton boton--contorno boton--peq' type='button' data-cancelar='" + escapar(g.id) + "'>Cancelar el grupo</button>";
       }
       return "<article class='grupo grupo--ancho' data-id='" + escapar(g.id) + "'>" +
         "<div class='grupo__cabecera'><h3>" + escapar(g.nombre) + "</h3><span class='grupo__estado grupo__estado--" + escapar(g.estado) + "'>" + escapar(g.estadoTexto) + "</span></div>" +
         "<div class='grupo__campo'>" + escapar(g.area) + "</div>" +
         "<dl><dt>Registrado</dt><dd>" + escapar((g.creado || "").slice(0, 10)) + "</dd><dt>Personas</dt><dd>" + (1 + g.integrantes.length) + " · " + confirmados + " de " + g.integrantes.length + " integrantes confirmados</dd>" +
-        (g.confirmaciones && g.confirmaciones.coordinador ? "<dt>Confirmado</dt><dd>" + escapar(g.confirmaciones.coordinador.fecha.slice(0, 10)) + " por " + escapar(g.confirmaciones.coordinador.nombre || "") + "</dd>" : "") +
+        (g.confirmaciones && g.confirmaciones.coordinador ? "<dt>Aprobado</dt><dd>" + escapar(g.confirmaciones.coordinador.fecha.slice(0, 10)) + " por " + escapar(g.confirmaciones.coordinador.nombre || "") + "</dd>" : "") +
         (g.cancelacion ? "<dt>Cancelado</dt><dd>" + escapar(g.cancelacion.fecha.slice(0, 10)) + (g.cancelacion.motivo ? " · " + escapar(g.cancelacion.motivo) : "") + "</dd>" : "") + "</dl>" +
         "<ul class='grupo__personas'>" + personaHtml(g.lider, "Líder") + g.integrantes.map(function (m) { return personaHtml(m, "Integrante", m); }).join("") + "</ul>" +
         "<div class='grupo__acciones'>" + acciones + "</div></article>";
@@ -107,10 +115,10 @@
     if (!g) return;
     if (b.hasAttribute("data-editar")) { abrirEditor(g); return; }
     if (b.hasAttribute("data-confirmar")) {
-      if (!window.confirm("¿Confirmar el grupo \"" + g.nombre + "\"? La secretaría técnica iniciará la asignación de la empresa.")) return;
+      if (!window.confirm("¿Aprobar el grupo \"" + g.nombre + "\" para el emparejamiento? La secretaría técnica le asignará una empresa.")) return;
       b.disabled = true;
       api("POST", "/api/grupos?accion=confirmar-grupo", { id: id }).then(function () { return cargarGrupos(); })
-        .catch(function (err) { window.alert(err.error || "No fue posible confirmar el grupo."); b.disabled = false; });
+        .catch(function (err) { window.alert(err.error || "No fue posible aprobar el grupo."); b.disabled = false; });
       return;
     }
     var motivo = window.prompt("Motivo de la cancelación del grupo \"" + g.nombre + "\" (se enviará al líder):", "");

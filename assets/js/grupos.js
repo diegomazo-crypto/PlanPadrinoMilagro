@@ -116,7 +116,7 @@
           panel.scrollIntoView({ behavior: "smooth", block: "start" });
           return;
         }
-        if (j._estado === 409) { aviso(estado, "ambar", "<strong>" + escapar(j.error) + "</strong> <a href='portal-grupo.html'>Ir al área de trabajo</a>."); return; }
+        if (j._estado === 409) { aviso(estado, "ambar", "<strong>" + escapar(j.error) + "</strong> <a href='portal.html'>Ingrese al portal</a>."); return; }
         var detalle = j.campos ? " Campos: " + j.campos.join(", ") + "." : "";
         aviso(estado, "rojo", "<strong>" + escapar(j.error || "No fue posible registrar el grupo.") + "</strong>" + escapar(detalle));
       })
