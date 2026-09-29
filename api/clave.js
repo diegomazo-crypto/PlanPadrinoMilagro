@@ -4,6 +4,8 @@
         restablece desde el enlace enviado por correo (token "restablecer"). El tipo de cuenta va en el token.
    POST ?accion=solicitar {correo}: envía al correo un enlace para crear o restablecer la clave. Para la
         secretaría técnica es también la forma de crear la cuenta (solo correos autorizados).
+   GET  ?accion=enlace&correo=…: devuelve los mismos enlaces sin enviar correo. Requiere la clave de
+        administración (cabecera x-clave-admin o ?clave=), para cuando el buzón del Plan no está disponible.
    PUT {claveActual, clave, confirmacion}: cambia la clave con la sesión abierta.
    La clave no puede coincidir con ningún dato suministrado en la inscripción. */
 const { responder, error, leerCuerpo, soloMetodos, iniciarSesion, sesionCualquiera } = require("../lib/http");
@@ -13,6 +15,7 @@ const ies = require("../lib/ies");
 const grupos = require("../lib/grupos");
 const secretaria = require("../lib/secretaria");
 const correo = require("../lib/correo");
+const crypto = require("crypto");
 
 const MODULOS = { empresa: empresas, ies, lider: grupos, secretaria };
 const DESTINOS = { empresa: "portal.html", ies: "portal-ies.html", lider: "portal-grupo.html", secretaria: "portal-secretaria.html" };
@@ -55,10 +58,9 @@ function tipoDeToken(carga) {
   return MODULOS[carga.t] ? carga.t : "empresa";
 }
 
-async function solicitarEnlace(req, res) {
-  const { correo: c } = await leerCuerpo(req);
-  const correoN = normalizarCorreo(c);
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoN)) return error(res, 400, "Indique un correo válido.");
+/* Enlaces de creación o restablecimiento de clave (1 hora) para todas las cuentas asociadas a un correo.
+   Para la secretaría técnica crea el registro si el correo está autorizado. */
+async function enlacesPara(correoN) {
   const enlaces = [];
   for (const tipo of ["empresa", "ies", "lider"]) {
     const cuenta = await MODULOS[tipo].cargarPorCorreo(correoN);
@@ -68,14 +70,21 @@ async function solicitarEnlace(req, res) {
     const cuenta = (await secretaria.cargarPorCorreo(correoN)) || (await secretaria.guardar(secretaria.nueva(correoN)));
     enlaces.push({ tipo: "secretaria", cuenta });
   }
+  return enlaces.map((e) => {
+    const token = firmarToken({ p: "restablecer", id: e.cuenta.id, t: e.tipo }, 60 * 60);
+    return { tipo: e.tipo, nombre: NOMBRES[e.tipo], nueva: !e.cuenta.clave, url: correo.SITIO + "/portal?restablecer=" + encodeURIComponent(token) };
+  });
+}
+
+async function solicitarEnlace(req, res) {
+  const { correo: c } = await leerCuerpo(req);
+  const correoN = normalizarCorreo(c);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoN)) return error(res, 400, "Indique un correo válido.");
+  const enlaces = await enlacesPara(correoN);
   if (enlaces.length) {
-    const filas = enlaces.map((e) => {
-      const token = firmarToken({ p: "restablecer", id: e.cuenta.id, t: e.tipo }, 60 * 60);
-      const url = correo.SITIO + "/portal?restablecer=" + encodeURIComponent(token);
-      return "<p style='text-align:center;margin:16px 0'><a href='" + url + "' style='display:inline-block;background:#08366A;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 24px;border-radius:8px'>" + (e.cuenta.clave ? "Restablecer la clave" : "Crear la clave") + " · " + NOMBRES[e.tipo] + "</a></p>";
-    }).join("");
+    const filas = enlaces.map((e) => "<p style='text-align:center;margin:16px 0'><a href='" + e.url + "' style='display:inline-block;background:#08366A;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 24px;border-radius:8px'>" + (e.nueva ? "Crear la clave" : "Restablecer la clave") + " · " + e.nombre + "</a></p>").join("");
     const html = correo.plantilla("Clave de acceso al portal del Plan Milagro",
-      "<p>Recibimos una solicitud para " + (enlaces.some((e) => e.cuenta.clave) ? "restablecer" : "crear") + " la clave de acceso asociada a <strong>" + correoN + "</strong>. Use el botón correspondiente; el enlace vence en una hora.</p>" + filas +
+      "<p>Recibimos una solicitud para " + (enlaces.some((e) => !e.nueva) ? "restablecer" : "crear") + " la clave de acceso asociada a <strong>" + correoN + "</strong>. Use el botón correspondiente; el enlace vence en una hora.</p>" + filas +
       "<p style='font-size:14px;color:#4C5A6E'>Si no hizo esta solicitud, ignore este mensaje: su clave actual sigue vigente.</p>");
     await correo.enviar({ para: correoN, asunto: "Plan Milagro · Clave de acceso", html, copia: "" });
   }
@@ -83,10 +92,32 @@ async function solicitarEnlace(req, res) {
   responder(res, 200, { ok: true, mensaje: "Si el correo corresponde a una cuenta del Plan, recibirá un enlace para crear o restablecer su clave." });
 }
 
+/* Clave de administración (la misma de /api/exportar), para obtener enlaces sin correo. */
+function autorizadoAdmin(req, url) {
+  const esperada = process.env.PPM_CLAVE_ADMIN || "";
+  if (!esperada || esperada.length < 12) return false;
+  const dada = req.headers["x-clave-admin"] || url.searchParams.get("clave") || "";
+  const a = Buffer.from(String(dada)), b = Buffer.from(esperada);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+async function enlaceAdmin(req, res, url) {
+  if (!autorizadoAdmin(req, url)) return error(res, 401, "No autorizado.");
+  const correoN = normalizarCorreo(url.searchParams.get("correo") || "");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoN)) return error(res, 400, "Indique un correo válido en ?correo=.");
+  const enlaces = await enlacesPara(correoN);
+  if (!enlaces.length) return error(res, 404, "No hay cuentas asociadas a ese correo.");
+  responder(res, 200, { ok: true, correo: correoN, vence: "1 hora", enlaces });
+}
+
 module.exports = async function (req, res) {
-  if (!soloMetodos(req, res, ["POST", "PUT"])) return;
+  if (!soloMetodos(req, res, ["GET", "POST", "PUT"])) return;
   try {
     const url = new URL(req.url, "http://x");
+    if (req.method === "GET") {
+      if (url.searchParams.get("accion") === "enlace") return enlaceAdmin(req, res, url);
+      return error(res, 405, "Método no permitido.");
+    }
     if (req.method === "POST" && url.searchParams.get("accion") === "solicitar") return solicitarEnlace(req, res);
 
     if (req.method === "PUT") {
