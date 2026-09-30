@@ -72,7 +72,7 @@
     var lista = estado.empresas.filter(function (e) { return (!fe || e.estado === fe) && (coincide([e.empresa, e.municipio, e.departamento, e.correo, e.contacto, e.nit].join(" "), f)); });
     $("#t-empresas tbody").innerHTML = lista.length ? lista.map(function (e) {
       var d = e.diagnostico || {};
-      return "<tr><td><strong>" + escapar(e.empresa) + "</strong><br><small>" + escapar(e.nit || "") + " · inscrita " + fecha(e.creado) + "</small></td><td>" + escapar(e.municipio) + (e.departamento ? "<br><small>" + escapar(e.departamento) + "</small>" : "") + "</td><td>" + escapar(e.sector) + "<br><small>" + escapar(e.tamano) + "</small></td><td>" + escapar(e.contacto) + "<br><small>" + escapar(e.correo) + " · " + escapar(e.telefono) + "</small></td><td>" + escapar(ESTADOS_EMPRESA[e.estado] || e.estado) + "</td><td>" + (d.completado ? "v" + d.version + " · " + Number(d.global).toFixed(2) + " · " + escapar(d.nivel) : (d.paso ? "paso " + d.paso : "sin iniciar")) + "</td><td>" + (e.grupoAsignado ? escapar(e.grupoAsignado.nombre) + "<br><small>" + escapar(e.grupoAsignado.ies) + "</small>" : "—") + "</td><td><button class='enlace' type='button' data-empresa='" + escapar(e.id) + "'>Ver</button>" + (e.informe ? " · <a href='/api/informe?id=" + encodeURIComponent(e.id) + "' download>PDF</a>" : "") + "</td></tr>";
+      return "<tr><td><strong>" + escapar(e.empresa) + "</strong><br><small>" + escapar(e.nit || "") + " · inscrita " + fecha(e.creado) + "</small></td><td>" + escapar(e.municipio) + (e.departamento ? "<br><small>" + escapar(e.departamento) + "</small>" : "") + "</td><td>" + escapar(e.sector) + "<br><small>" + escapar(e.tamano) + "</small></td><td>" + escapar(e.contacto) + "<br><small>" + escapar(e.correo) + " · " + escapar(e.telefono) + "</small></td><td>" + escapar(ESTADOS_EMPRESA[e.estado] || e.estado) + "</td><td>" + (d.completado ? "v" + d.version + " · " + Number(d.global).toFixed(2) + " · " + escapar(d.nivel) : (d.paso ? "paso " + d.paso : "sin iniciar")) + "</td><td>" + (e.grupoAsignado ? escapar(e.grupoAsignado.nombre) + "<br><small>" + escapar(e.grupoAsignado.ies) + "</small>" : "—") + "</td><td><button class='enlace' type='button' data-empresa='" + escapar(e.id) + "'>Ver</button>" + (e.informe ? " · <a href='/api/informe?id=" + encodeURIComponent(e.id) + "' download>PDF</a>" : "") + " · <button class='enlace enlace--peligro' type='button' data-eliminar='empresa' data-id='" + escapar(e.id) + "' data-nombre='" + escapar(e.empresa) + "'>Eliminar</button></td></tr>";
     }).join("") : "<tr><td colspan='8'>No hay empresas en esta vista.</td></tr>";
   }
   $("#f-empresas").addEventListener("input", pintarEmpresas);
@@ -102,7 +102,7 @@
     var f = $("#f-grupos").value.trim(), fe = $("#f-grupos-estado").value;
     var lista = estado.grupos.filter(function (g) { return (!fe || g.estado === fe) && coincide([g.nombre, g.ies, g.lider.nombre, g.lider.correo, g.area].join(" "), f); });
     $("#t-grupos tbody").innerHTML = lista.length ? lista.map(function (g) {
-      return "<tr><td><strong>" + escapar(g.nombre) + "</strong><br><small>registrado " + fecha(g.creado) + "</small></td><td>" + escapar(g.ies) + (g.coordinadorVinculado ? "" : "<br><small>sin coordinador vinculado</small>") + "</td><td>" + escapar(g.area) + "</td><td>" + escapar(g.lider.nombre) + "<br><small>" + escapar(g.lider.correo) + " · " + escapar(g.lider.telefono) + "</small></td><td>" + g.personas + "<br><small>" + g.confirmados + " de " + g.integrantes.length + " confirmados</small></td><td><span class='grupo__estado grupo__estado--" + escapar(g.estado) + "'>" + escapar(g.estadoTexto) + "</span></td><td>" + (g.empresaAsignada ? escapar(g.empresaAsignada.nombre) : "—") + "</td><td><button class='enlace' type='button' data-grupo='" + escapar(g.id) + "'>Ver</button></td></tr>";
+      return "<tr><td><strong>" + escapar(g.nombre) + "</strong><br><small>registrado " + fecha(g.creado) + "</small></td><td>" + escapar(g.ies) + (g.coordinadorVinculado ? "" : "<br><small>sin coordinador vinculado</small>") + "</td><td>" + escapar(g.area) + "</td><td>" + escapar(g.lider.nombre) + "<br><small>" + escapar(g.lider.correo) + " · " + escapar(g.lider.telefono) + "</small></td><td>" + g.personas + "<br><small>" + g.confirmados + " de " + g.integrantes.length + " confirmados</small></td><td><span class='grupo__estado grupo__estado--" + escapar(g.estado) + "'>" + escapar(g.estadoTexto) + "</span></td><td>" + (g.empresaAsignada ? escapar(g.empresaAsignada.nombre) : "—") + "</td><td><button class='enlace' type='button' data-grupo='" + escapar(g.id) + "'>Ver</button> · <button class='enlace enlace--peligro' type='button' data-eliminar='grupo' data-id='" + escapar(g.id) + "' data-nombre='" + escapar(g.nombre) + "'>Eliminar</button></td></tr>";
     }).join("") : "<tr><td colspan='8'>No hay grupos en esta vista.</td></tr>";
   }
   $("#f-grupos").addEventListener("input", pintarGrupos);
@@ -128,7 +128,7 @@
     var f = $("#f-ies").value.trim();
     var lista = estado.ies.filter(function (i) { return coincide([i.nombre, i.municipio, i.coordinador.nombre, i.correo].join(" "), f); });
     $("#t-ies tbody").innerHTML = lista.length ? lista.map(function (i) {
-      return "<tr><td><strong>" + escapar(i.nombre) + "</strong><br><small>" + escapar([i.caracter, i.sector, i.codigo ? "SNIES " + i.codigo : ""].filter(Boolean).join(" · ")) + "</small></td><td>" + escapar(i.municipio) + "</td><td>" + escapar(i.coordinador.nombre) + (i.coordinador.cargo ? "<br><small>" + escapar(i.coordinador.cargo) + "</small>" : "") + "</td><td>" + escapar(i.correo) + (i.coordinador.telefono ? "<br><small>" + escapar(i.coordinador.telefono) + "</small>" : "") + (i.tieneClave ? "" : "<br><small>sin clave creada</small>") + "</td><td>" + i.grupos + "<br><small>" + i.gruposConfirmados + " aprobados</small></td><td>" + i.personas + "</td><td><button class='enlace' type='button' data-ies='" + escapar(i.id) + "'>Editar coordinador</button></td></tr>";
+      return "<tr><td><strong>" + escapar(i.nombre) + "</strong><br><small>" + escapar([i.caracter, i.sector, i.codigo ? "SNIES " + i.codigo : ""].filter(Boolean).join(" · ")) + "</small></td><td>" + escapar(i.municipio) + "</td><td>" + escapar(i.coordinador.nombre) + (i.coordinador.cargo ? "<br><small>" + escapar(i.coordinador.cargo) + "</small>" : "") + "</td><td>" + escapar(i.correo) + (i.coordinador.telefono ? "<br><small>" + escapar(i.coordinador.telefono) + "</small>" : "") + (i.tieneClave ? "" : "<br><small>sin clave creada</small>") + "</td><td>" + i.grupos + "<br><small>" + i.gruposConfirmados + " aprobados</small></td><td>" + i.personas + "</td><td><button class='enlace' type='button' data-ies='" + escapar(i.id) + "'>Editar coordinador</button> · <button class='enlace enlace--peligro' type='button' data-eliminar='ies' data-id='" + escapar(i.id) + "' data-nombre='" + escapar(i.nombre) + "'>Eliminar</button></td></tr>";
     }).join("") : "<tr><td colspan='7'>No hay instituciones vinculadas.</td></tr>";
   }
   $("#f-ies").addEventListener("input", pintarIes);
@@ -180,8 +180,9 @@
 
   /* ---------- Acciones en las tablas y modal ---------- */
   document.addEventListener("click", function (e) {
-    var b = e.target.closest("button[data-empresa], button[data-grupo], button[data-ies], button[data-desasignar]");
+    var b = e.target.closest("button[data-empresa], button[data-grupo], button[data-ies], button[data-desasignar], button[data-eliminar]");
     if (!b) return;
+    if (b.hasAttribute("data-eliminar")) return eliminar(b.getAttribute("data-eliminar"), b.getAttribute("data-id"), b.getAttribute("data-nombre"));
     if (b.hasAttribute("data-empresa")) return detalleEmpresa(b.getAttribute("data-empresa"));
     if (b.hasAttribute("data-grupo")) return detalleGrupo(b.getAttribute("data-grupo"));
     if (b.hasAttribute("data-ies")) return editarIes(b.getAttribute("data-ies"));
@@ -190,6 +191,16 @@
       api("POST", "/api/secretaria?accion=desasignar", { grupoId: b.getAttribute("data-desasignar") }).then(function () { return cargar(); }).catch(function (err) { window.alert(err.error || "No fue posible deshacer."); });
     }
   });
+  var TIPOS = { empresa: "la empresa", grupo: "el grupo", ies: "la institución" };
+  var CONSECUENCIAS = { empresa: "Se borran su inscripción, su autodiagnóstico y su informe; si tiene grupo asignado, el grupo vuelve a quedar disponible.", grupo: "Se borran el grupo, sus integrantes y su plan de trabajo; si tiene empresa asignada, la empresa queda sin grupo.", ies: "Se borra la cuenta del coordinador; los grupos de la institución se conservan y quedan a la espera de un nuevo coordinador." };
+  function eliminar(tipo, id, nombre) {
+    var escrito = window.prompt("Va a eliminar " + TIPOS[tipo] + " \"" + nombre + "\". " + CONSECUENCIAS[tipo] + "\n\nEsta acción no se puede deshacer. Para confirmar, escriba ELIMINAR:", "");
+    if (escrito === null) return;
+    if (escrito.trim().toUpperCase() !== "ELIMINAR") { window.alert("No se eliminó: debe escribir ELIMINAR para confirmar."); return; }
+    api("DELETE", "/api/secretaria?vista=" + tipo + "&id=" + encodeURIComponent(id))
+      .then(function (r) { aviso($("#st-aviso"), "verde", "<strong>Eliminado:</strong> " + escapar(r.eliminado.nombre || "") + (r.eliminado.gruposDesvinculados ? " (" + r.eliminado.gruposDesvinculados + " grupo(s) quedan a la espera de coordinador)" : "") + "."); return cargar(); })
+      .catch(function (err) { aviso($("#st-aviso"), "rojo", escapar(err.error || "No fue posible eliminar.")); });
+  }
   function abrirModal(titulo, html) { $("#modal-titulo").textContent = titulo; $("#modal-cuerpo").innerHTML = html; $("#modal").hidden = false; }
   $("#modal-cerrar").addEventListener("click", function () { $("#modal").hidden = true; });
   $("#modal").addEventListener("click", function (e) { if (e.target === $("#modal")) $("#modal").hidden = true; });

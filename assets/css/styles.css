@@ -725,3 +725,4 @@ td ul { margin: 0; padding-left: 1.1em; }
 .modal__cabecera h2 { margin: 0; font-size: 1.3rem; }
 .modal__cerrar { background: none; border: 1px solid var(--gris-300); border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; }
 .filtro-texto { font: inherit; padding: 8px 10px; border: 1px solid var(--gris-300); border-radius: 8px; background: #fff; min-width: 220px; }
+.enlace--peligro { color: var(--rojo); }

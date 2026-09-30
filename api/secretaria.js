@@ -5,13 +5,15 @@
    GET  ?vista=grupo&id=…         detalle de un grupo con su plan de trabajo
    PUT  ?vista=ies                {id, responsable_nombre, responsable_cargo, responsable_telefono} datos del coordinador
    POST ?accion=asignar           {grupoId, empresaId} empareja un grupo confirmado con una empresa
-   POST ?accion=desasignar        {grupoId} deshace el emparejamiento */
+   POST ?accion=desasignar        {grupoId} deshace el emparejamiento
+   DELETE ?vista=empresa|grupo|ies&id=…   elimina el registro y limpia sus vínculos (emparejamiento, informe, coordinador) */
 const { responder, error, leerCuerpo, soloMetodos, sesionActual, texto } = require("../lib/http");
 const secretaria = require("../lib/secretaria");
 const empresas = require("../lib/empresas");
 const ies = require("../lib/ies");
 const grupos = require("../lib/grupos");
 const correo = require("../lib/correo");
+const informe = require("../lib/informe");
 const CAT = require("../assets/js/catalogo-grupos.js");
 
 function resumenEmpresa(e) {
@@ -34,7 +36,7 @@ function resumenGrupo(g) {
 }
 
 module.exports = async function (req, res) {
-  if (!soloMetodos(req, res, ["GET", "PUT", "POST"])) return;
+  if (!soloMetodos(req, res, ["GET", "PUT", "POST", "DELETE"])) return;
   try {
     const sesion = sesionActual(req, "secretaria");
     if (!sesion) return error(res, 401, "Inicie sesión como secretaría técnica.");
@@ -66,6 +68,48 @@ module.exports = async function (req, res) {
         grupos: { total: todosGrupos.length, activos: activos.length, porEstado: porEstado(todosGrupos), personas: activos.reduce((n, g) => n + grupos.personas(g), 0), listosParaAsignar: todosGrupos.filter((g) => g.estado === "confirmado").length, asignados: todosGrupos.filter((g) => g.estado === "asignado").length }
       };
       return responder(res, 200, { ok: true, tablero, empresas: todasEmpresas.map(resumenEmpresa).sort((a, b) => (a.creado < b.creado ? 1 : -1)), ies: todasIes.map((i) => resumenIes(i, todosGrupos)).sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), "es")), grupos: todosGrupos.map(resumenGrupo).sort((a, b) => (a.creado < b.creado ? 1 : -1)) });
+    }
+
+    if (req.method === "DELETE") {
+      const id = texto(url.searchParams.get("id"), 64);
+      if (!id) return error(res, 400, "Indique el id.");
+      if (vista === "empresa") {
+        const e = await empresas.cargarPorId(id);
+        if (!e) return error(res, 404, "No se encontró la empresa.");
+        if (e.grupoAsignado) {
+          const g = await grupos.cargarPorId(e.grupoAsignado.id);
+          if (g && g.empresaAsignada && g.empresaAsignada.id === e.id) { g.empresaAsignada = null; g.estado = "confirmado"; grupos.registrarEvento(g, "empresa_eliminada_por_secretaria"); await grupos.guardar(g); }
+        }
+        await informe.eliminarArchivado(e.id);
+        await empresas.eliminar(e.id);
+        secretaria.registrarEvento(cuenta, "empresa_eliminada:" + e.id + ":" + (e.datos && e.datos.empresa));
+        await secretaria.guardar(cuenta);
+        return responder(res, 200, { ok: true, eliminado: { tipo: "empresa", id: e.id, nombre: e.datos && e.datos.empresa } });
+      }
+      if (vista === "grupo") {
+        const g = await grupos.cargarPorId(id);
+        if (!g) return error(res, 404, "No se encontró el grupo.");
+        if (g.empresaAsignada) {
+          const e = await empresas.cargarPorId(g.empresaAsignada.id);
+          if (e && e.grupoAsignado && e.grupoAsignado.id === g.id) { e.grupoAsignado = null; empresas.registrarEvento(e, "grupo_eliminado_por_secretaria"); await empresas.guardar(e); }
+        }
+        await grupos.eliminar(g.id);
+        secretaria.registrarEvento(cuenta, "grupo_eliminado:" + g.id + ":" + g.nombre);
+        await secretaria.guardar(cuenta);
+        return responder(res, 200, { ok: true, eliminado: { tipo: "grupo", id: g.id, nombre: g.nombre } });
+      }
+      if (vista === "ies") {
+        const inst = await ies.cargarPorId(id);
+        if (!inst) return error(res, 404, "No se encontró la institución.");
+        // Los grupos de la institución se conservan; quedan a la espera de un nuevo coordinador
+        const suyos = (await grupos.listarTodos()).filter((g) => g.iesId === inst.id);
+        for (const g of suyos) { g.iesId = null; grupos.registrarEvento(g, "coordinador_eliminado_por_secretaria"); await grupos.guardar(g); }
+        await ies.eliminar(inst.id);
+        secretaria.registrarEvento(cuenta, "ies_eliminada:" + inst.id + ":" + (inst.institucion && inst.institucion.nombre));
+        await secretaria.guardar(cuenta);
+        return responder(res, 200, { ok: true, eliminado: { tipo: "ies", id: inst.id, nombre: inst.institucion && inst.institucion.nombre, gruposDesvinculados: suyos.length } });
+      }
+      return error(res, 400, "Indique ?vista=empresa, grupo o ies.");
     }
 
     const cuerpo = await leerCuerpo(req);
