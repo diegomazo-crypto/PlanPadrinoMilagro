@@ -196,21 +196,33 @@ POST /api/informe                     → la empresa reenvía el informe a su co
 Si el correo falla, el flujo no se interrumpe: el informe queda archivado, el portal lo indica y el intento
 se registra en el historial de la empresa (`correos`). `GET /api/salud` muestra el modo de correo activo.
 
-### Configurar el buzón (Microsoft 365)
+### Configurar el buzón (Microsoft Graph, recomendado)
+
+El envío usa **Microsoft Graph** con un registro de aplicación en Entra ID que solo tiene el permiso
+`Mail.Send`, limitado por una directiva de acceso al buzón del Plan. No requiere SMTP autenticado ni la
+contraseña del buzón. Variables en Vercel (Production; también Preview si se quiere probar en vistas previas):
 
 | Variable | Valor |
 |---|---|
-| `PPM_CORREO_USUARIO` | `planpadrinomilagro@ceipa.edu.co` |
-| `PPM_CORREO_CLAVE` | Contraseña del buzón (o contraseña de aplicación si tiene MFA). |
-| `PPM_CORREO_SERVIDOR` / `PPM_CORREO_PUERTO` | Opcionales; por defecto `smtp.office365.com` y `587` (STARTTLS). |
-| `PPM_CORREO_REMITENTE` | Opcional; por defecto `Plan Milagro <planpadrinomilagro@ceipa.edu.co>`. |
+| `TENANT_ID` | Identificador del tenant de Entra ID (lo entrega el equipo de TI). |
+| `CLIENT_ID` | Identificador de la aplicación registrada. |
+| `CLIENT_SECRET` | Secreto de la aplicación. Guardarlo solo en Vercel; al vencer, TI genera uno nuevo y se reemplaza. |
+| `REMITENTE` | Buzón desde el que se envía: `planpadrinomilagro@ceipa.edu.co`. |
+| `PPM_CORREO_REMITENTE` | Opcional; nombre visible, por defecto `Plan Milagro <planpadrinomilagro@ceipa.edu.co>`. |
 | `PPM_CORREO_COPIA` | Opcional; buzón que recibe copia del informe. Por defecto el mismo buzón del Plan; vacío para no copiar. |
 | `PPM_URL_SITIO` | Opcional; enlace usado en los correos (por defecto `https://www.planpadrinomilagro.co`). |
 
-Requisitos en Microsoft 365: el buzón debe tener habilitado **SMTP autenticado** (Centro de administración de
-Exchange → Buzones → el buzón → Administrar aplicaciones de correo → *SMTP autenticado*) y la organización
-debe permitir la autenticación básica para SMTP. Si la política de seguridad lo bloquea, la alternativa es un
-registro de aplicación en Entra ID con permiso `Mail.Send` (Microsoft Graph); avise para adaptar el envío.
+También se aceptan los nombres `PPM_GRAPH_TENANT_ID`, `PPM_GRAPH_CLIENT_ID`, `PPM_GRAPH_CLIENT_SECRET` y
+`PPM_GRAPH_BUZON`, y los alias `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`. Después de definirlas
+hay que redesplegar. `GET /api/salud` debe mostrar `correo.modo: "graph"`.
+
+**Prueba de envío**: con la sesión de la secretaría técnica abierta o con la clave de administración,
+`POST /api/salud?accion=correo-prueba&para=<correo>` (o `&clave=<PPM_CLAVE_ADMIN>`) envía un correo de prueba
+y devuelve el resultado, incluido el error de Graph si lo hay (por ejemplo, secreto vencido o buzón no permitido
+por la directiva).
+
+Alternativa SMTP (solo si la organización permite SMTP autenticado): `PPM_CORREO_USUARIO` y `PPM_CORREO_CLAVE`
+(`smtp.office365.com:587`, STARTTLS); Graph tiene prioridad si están definidas ambas configuraciones.
 
 Sin credenciales, en desarrollo local los correos se guardan como archivos en `.datos-local/correos/`; en
 Vercel se marcan como no enviados sin afectar el flujo.
