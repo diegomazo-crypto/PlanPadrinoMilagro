@@ -35,7 +35,7 @@
   }
   function cargar() {
     return api("GET", "/api/secretaria?vista=resumen").then(function (r) {
-      estado.tablero = r.tablero; estado.empresas = r.empresas; estado.grupos = r.grupos; estado.ies = r.ies;
+      estado.tablero = r.tablero; estado.empresas = r.empresas; estado.grupos = r.grupos; estado.ies = r.ies; estado.emparejamiento = r.emparejamiento;
       $("#st-meta").textContent = "Corte: " + fechaHora(r.tablero.fecha).replace(" ", " a las ") + " (UTC) · sesión de " + estado.cuenta.correo;
       pintarTablero(); pintarEmpresas(); pintarGrupos(); pintarIes(); pintarAsignacion();
     }).catch(function (e) { aviso($("#st-aviso"), "rojo", escapar(e.error || "No fue posible cargar el tablero.")); if (e._estado === 401) mostrar("login"); });
@@ -155,21 +155,68 @@
     });
   }
 
-  /* ---------- Emparejamiento ---------- */
+  /* ---------- Emparejamiento: FIFO + área ---------- */
   function pintarAsignacion() {
-    var gruposListos = estado.grupos.filter(function (g) { return g.estado === "confirmado"; });
-    var empresasListas = estado.empresas.filter(function (e) { return e.aceptado && !e.grupoAsignado && e.estado !== "declinado"; });
-    $("#a-grupo").innerHTML = "<option value=''>Seleccione…</option>" + gruposListos.map(function (g) { return "<option value='" + escapar(g.id) + "'>" + escapar(g.nombre) + " · " + escapar(g.ies) + " · " + escapar(g.area) + "</option>"; }).join("");
-    $("#a-empresa").innerHTML = "<option value=''>Seleccione…</option>" + empresasListas.map(function (e) { return "<option value='" + escapar(e.id) + "'>" + escapar(e.empresa) + " · " + escapar(e.municipio) + " · " + escapar(e.frente || "") + (e.diagnostico.completado ? " · diagnóstico " + Number(e.diagnostico.global).toFixed(2) : " · sin diagnóstico") + "</option>"; }).join("");
+    var m = estado.emparejamiento || { grupos: [], empresas: [], sugerencias: [], sinPareja: [], gruposSinPareja: [] };
+    estado.sugerencias = m.sugerencias;
+    $("#t-sugerencias tbody").innerHTML = m.sugerencias.length ? m.sugerencias.map(function (s, i) {
+      return "<tr><td>" + (i + 1) + "</td><td><strong>" + escapar(s.empresa.nombre) + "</strong><br><small>turno " + s.empresa.posicion + " · inscrita " + fecha(s.empresa.inscrita) + (s.empresa.origenArea.indexOf("autodiagnóstico") >= 0 ? " · área por autodiagnóstico" : "") + "</small></td><td>" + escapar(s.area) + "</td><td><strong>" + escapar(s.grupo.nombre) + "</strong><br><small>turno " + s.grupo.posicion + " · " + escapar(s.grupo.ies) + " · aprobado " + fecha(s.grupo.aprobado) + "</small></td><td><button class='enlace' type='button' data-asignar-par='" + i + "'>Asignar</button></td></tr>";
+    }).join("") : "<tr><td colspan='5'>No hay parejas sugeridas: " + (m.empresas.length ? "ninguna empresa en espera tiene un grupo aprobado en su área." : "no hay empresas en espera.") + "</td></tr>";
+    $("#a-todas").hidden = m.sugerencias.length < 2;
+    var notas = [];
+    if (m.sinPareja.length) notas.push(m.sinPareja.length + " empresa(s) en espera sin grupo en su área: " + m.sinPareja.map(function (x) { return x.empresa.nombre + " (" + x.motivo + ")"; }).join("; "));
+    if (m.gruposSinPareja.length) notas.push(m.gruposSinPareja.length + " grupo(s) aprobado(s) sin empresa en su área: " + m.gruposSinPareja.map(function (g) { return g.nombre + " (" + g.area + ")"; }).join("; "));
+    $("#a-sugerencias-nota").textContent = notas.join(" · ");
+    $("#t-cola-empresas tbody").innerHTML = m.empresas.length ? m.empresas.map(function (e) { return "<tr><td>" + e.posicion + "</td><td>" + escapar(e.nombre) + "<br><small>" + escapar(e.municipio || "") + (e.diagnostico ? "" : " · sin autodiagnóstico") + "</small></td><td>" + fecha(e.inscrita) + "</td><td>" + (e.area ? escapar(e.area) : "<em>sin definir</em>") + "<br><small>" + escapar(e.origenArea) + "</small></td></tr>"; }).join("") : "<tr><td colspan='4'>Sin empresas en espera.</td></tr>";
+    $("#t-cola-grupos tbody").innerHTML = m.grupos.length ? m.grupos.map(function (g) { return "<tr><td>" + g.posicion + "</td><td>" + escapar(g.nombre) + "<br><small>" + escapar(g.ies) + " · " + g.personas + " personas</small></td><td>" + fecha(g.aprobado) + "</td><td>" + escapar(g.area) + "</td></tr>"; }).join("") : "<tr><td colspan='4'>Sin grupos aprobados en espera.</td></tr>";
+    // Asignación manual: empresas y grupos en orden FIFO; al elegir empresa se destacan los grupos de su área
+    $("#a-empresa").innerHTML = "<option value=''>Seleccione…</option>" + m.empresas.map(function (e) { return "<option value='" + escapar(e.id) + "' data-area='" + escapar(e.area || "") + "'>" + e.posicion + ". " + escapar(e.nombre) + " · " + escapar(e.area || "sin área") + "</option>"; }).join("");
+    pintarGruposManual();
     var asignados = estado.grupos.filter(function (g) { return g.estado === "asignado"; });
     $("#t-asignados tbody").innerHTML = asignados.length ? asignados.map(function (g) {
       return "<tr><td>" + escapar(g.nombre) + "</td><td>" + escapar(g.ies) + "</td><td>" + escapar(g.empresaAsignada && g.empresaAsignada.nombre) + "</td><td>" + fecha(g.empresaAsignada && g.empresaAsignada.fecha) + "</td><td>" + g.actividades + "</td><td><button class='enlace' type='button' data-grupo='" + escapar(g.id) + "'>Ver</button> · <button class='enlace' type='button' data-desasignar='" + escapar(g.id) + "'>Deshacer</button></td></tr>";
     }).join("") : "<tr><td colspan='6'>Aún no hay emparejamientos.</td></tr>";
   }
+  function pintarGruposManual() {
+    var m = estado.emparejamiento || { grupos: [] };
+    var sel = $("#a-empresa"), op = sel.options[sel.selectedIndex], area = op ? op.getAttribute("data-area") : "";
+    var lista = m.grupos.slice().sort(function (a, b) { return (a.area === area ? 0 : 1) - (b.area === area ? 0 : 1) || a.posicion - b.posicion; });
+    $("#a-grupo").innerHTML = "<option value=''>Seleccione…</option>" + lista.map(function (g) { return "<option value='" + escapar(g.id) + "'>" + (area && g.area === area ? "✓ " : "") + g.posicion + ". " + escapar(g.nombre) + " · " + escapar(g.ies) + " · " + escapar(g.area) + "</option>"; }).join("");
+    $("#a-grupo-ayuda").textContent = area ? "Los grupos marcados con ✓ coinciden con el área de la empresa; los demás se apartan del criterio." : "";
+  }
+  $("#a-empresa").addEventListener("change", pintarGruposManual);
+
+  function asignarPares(pares) {
+    var est = $("#a-estado");
+    aviso(est, "", "");
+    return api("POST", "/api/secretaria?accion=asignar-sugeridos", { pares: pares })
+      .then(function (r) {
+        var fallidos = r.resultados.filter(function (x) { return !x.ok; });
+        aviso(est, fallidos.length ? "ambar" : "verde", "<strong>" + r.asignados + " emparejamiento(s) realizado(s).</strong> " + r.resultados.filter(function (x) { return x.ok; }).map(function (x) { return escapar(x.empresa) + " ↔ " + escapar(x.grupo) + " (correos: líder " + (x.correos.lider ? "enviado" : "falló") + ", empresa " + (x.correos.empresa ? "enviado" : "falló") + ")"; }).join("; ") + (fallidos.length ? "<br>No realizados: " + fallidos.map(function (x) { return escapar(x.empresa || x.empresaId) + ": " + escapar(x.error); }).join("; ") : ""));
+        return cargar();
+      })
+      .catch(function (err) { aviso(est, "rojo", escapar(err.error || "No fue posible asignar.")); });
+  }
+  $("#t-sugerencias").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-asignar-par]");
+    if (!b) return;
+    var s = estado.sugerencias[Number(b.getAttribute("data-asignar-par"))];
+    if (!s) return;
+    if (!window.confirm("¿Asignar el grupo \"" + s.grupo.nombre + "\" a la empresa \"" + s.empresa.nombre + "\"? Ambos recibirán un correo con los datos de contacto.")) return;
+    b.disabled = true;
+    asignarPares([{ grupoId: s.grupo.id, empresaId: s.empresa.id }]);
+  });
+  $("#a-todas").addEventListener("click", function () {
+    var pares = estado.sugerencias.map(function (s) { return { grupoId: s.grupo.id, empresaId: s.empresa.id }; });
+    if (!pares.length) return;
+    if (!window.confirm("¿Asignar las " + pares.length + " parejas sugeridas? Cada líder y cada empresa recibirán un correo con los datos de contacto.")) return;
+    $("#a-todas").disabled = true;
+    asignarPares(pares).then(function () { $("#a-todas").disabled = false; });
+  });
   $("#form-asignar").addEventListener("submit", function (ev) {
     ev.preventDefault();
     var form = ev.target, est = $(".formulario__estado", form), g = $("#a-grupo").value, e = $("#a-empresa").value;
-    if (!g || !e) { aviso(est, "rojo", "Seleccione el grupo y la empresa."); return; }
+    if (!g || !e) { aviso(est, "rojo", "Seleccione la empresa y el grupo."); return; }
     if (!window.confirm("¿Asignar el grupo seleccionado a esta empresa? Ambos recibirán un correo con los datos de contacto.")) return;
     ocupado(form, true); aviso(est, "", "");
     api("POST", "/api/secretaria?accion=asignar", { grupoId: g, empresaId: e })

@@ -5,6 +5,9 @@
    GET  ?vista=grupo&id=…         detalle de un grupo con su plan de trabajo
    PUT  ?vista=ies                {id, responsable_nombre, responsable_cargo, responsable_telefono} datos del coordinador
    POST ?accion=asignar           {grupoId, empresaId} empareja un grupo confirmado con una empresa
+   POST ?accion=asignar-sugeridos {pares:[{grupoId, empresaId}]} aplica varias parejas (las sugeridas por FIFO + área)
+   El resumen incluye `emparejamiento`: colas FIFO de grupos aprobados (por fecha de aprobación) y de empresas
+   listas (por fecha de inscripción) y las parejas sugeridas por orden de llegada y coincidencia de área.
    POST ?accion=desasignar        {grupoId} deshace el emparejamiento
    DELETE ?vista=empresa|grupo|ies&id=…   elimina el registro y limpia sus vínculos (emparejamiento, informe, coordinador) */
 const { responder, error, leerCuerpo, soloMetodos, sesionActual, texto } = require("../lib/http");
@@ -30,6 +33,67 @@ function resumenIes(i, lista) {
     coordinador: { nombre: d.responsable_nombre, cargo: d.responsable_cargo, telefono: d.responsable_telefono }, estado: i.estado, tieneClave: Boolean(i.clave), creado: i.creado,
     grupos: suyos.filter((g) => g.estado !== "cancelado").length, gruposConfirmados: suyos.filter((g) => g.estado === "confirmado" || g.estado === "asignado").length, personas: suyos.filter((g) => g.estado !== "cancelado").reduce((n, g) => n + grupos.personas(g), 0) };
 }
+/* ---- Emparejamiento: FIFO + área de acompañamiento ---- */
+const AREA_POR_CAPACIDAD = {
+  "Capacidades financieras": "Finanzas y recuperación económica",
+  "Capacidades de marketing": "Ventas, clientes y reactivación comercial",
+  "Capacidades organizacionales": "Operaciones y continuidad del negocio",
+  "Capacidades gerenciales": "Estrategia, modelo de negocio y visión de futuro",
+  "Capacidades de innovación": "Estrategia, modelo de negocio y visión de futuro"
+};
+/* Área efectiva de la empresa: el frente prioritario que declaró o, si pidió orientación, la capacidad
+   más débil de su autodiagnóstico. */
+function areaEmpresa(e) {
+  const frente = e.datos && e.datos.frente_prioritario;
+  if (CAT.AREAS.includes(frente)) return { area: frente, origen: "frente prioritario declarado" };
+  const caps = e.diagnostico && e.diagnostico.resultados && e.diagnostico.resultados.capacidades;
+  if (Array.isArray(caps) && caps.length) {
+    const menor = caps.slice().sort((a, b) => a.ponderado - b.ponderado)[0];
+    const area = AREA_POR_CAPACIDAD[menor.nombre];
+    if (area) return { area, origen: "capacidad más débil del autodiagnóstico (" + menor.nombre + ")" };
+  }
+  return { area: null, origen: frente ? "pidió orientación y aún no tiene autodiagnóstico" : "sin frente definido" };
+}
+function fechaAprobacion(g) { return (g.confirmaciones && g.confirmaciones.coordinador && g.confirmaciones.coordinador.fecha) || g.creado; }
+function grupoListo(g) { return g.estado === "confirmado" && !g.empresaAsignada; }
+function empresaLista(e) { return Boolean(e.aceptaciones && e.aceptaciones.terminos) && !e.grupoAsignado && e.estado !== "declinado"; }
+
+function emparejamiento(todasEmpresas, todosGrupos) {
+  const colaGrupos = todosGrupos.filter(grupoListo).sort((a, b) => (fechaAprobacion(a) < fechaAprobacion(b) ? -1 : 1))
+    .map((g, i) => ({ posicion: i + 1, id: g.id, nombre: g.nombre, ies: g.ies && g.ies.nombre, area: g.area, aprobado: fechaAprobacion(g), personas: grupos.personas(g) }));
+  const empresas = todasEmpresas.filter(empresaLista).sort((a, b) => (a.creado < b.creado ? -1 : 1))
+    .map((e, i) => { const a = areaEmpresa(e); return { posicion: i + 1, id: e.id, nombre: e.datos && e.datos.empresa, municipio: e.datos && e.datos.municipio, inscrita: e.creado, frente: e.datos && e.datos.frente_prioritario, area: a.area, origenArea: a.origen, diagnostico: Boolean(e.diagnostico && e.diagnostico.completado) }; });
+  const usados = new Set(), sugerencias = [], sinPareja = [];
+  empresas.forEach((e) => {
+    const g = e.area ? colaGrupos.find((x) => !usados.has(x.id) && x.area === e.area) : null;
+    if (g) { usados.add(g.id); sugerencias.push({ empresa: e, grupo: g, area: e.area }); }
+    else sinPareja.push({ empresa: e, motivo: e.area ? "no hay grupo aprobado disponible en el área " + e.area : "sin área definida: " + e.origenArea });
+  });
+  return { criterios: ["Orden de llegada (FIFO): empresas por fecha de inscripción, grupos por fecha de aprobación", "Área de acompañamiento: el área del grupo debe coincidir con el frente prioritario de la empresa"], grupos: colaGrupos, empresas, sugerencias, sinPareja, gruposSinPareja: colaGrupos.filter((g) => !usados.has(g.id)) };
+}
+
+/* Ejecuta un emparejamiento y envía los correos. Devuelve { ok, error?, grupo, empresa, correos }. */
+async function asignar(grupo, empresa, cuenta) {
+  if (!grupoListo(grupo)) return { ok: false, error: "Solo se asignan grupos aprobados por su institución y sin empresa asignada." };
+  if (empresa.grupoAsignado) return { ok: false, error: "Esa empresa ya tiene un grupo asignado (" + empresa.grupoAsignado.nombre + ")." };
+  if (!(empresa.aceptaciones && empresa.aceptaciones.terminos)) return { ok: false, error: "La empresa aún no ha aceptado los términos del acompañamiento." };
+  const ahora = new Date().toISOString();
+  grupo.empresaAsignada = { id: empresa.id, nombre: empresa.datos.empresa, fecha: ahora, por: cuenta.correo };
+  grupo.estado = "asignado";
+  grupos.registrarEvento(grupo, "empresa_asignada:" + empresa.id);
+  empresa.grupoAsignado = { id: grupo.id, nombre: grupo.nombre, ies: grupo.ies.nombre, area: grupo.area, lider: { nombre: grupo.lider.nombre, correo: grupo.lider.correo, telefono: grupo.lider.telefono }, fecha: ahora };
+  empresas.registrarEvento(empresa, "grupo_asignado:" + grupo.id);
+  const m1 = correo.empresaAsignadaLider(grupo, empresa), m2 = correo.grupoAsignadoEmpresa(empresa, grupo);
+  const e1 = await correo.enviar({ para: grupo.correo, asunto: m1.asunto, html: m1.html });
+  const e2 = await correo.enviar({ para: empresa.correo, asunto: m2.asunto, html: m2.html });
+  grupo.correos.push({ tipo: "empresa_asignada", para: grupo.correo, fecha: e1.fecha, estado: e1.ok ? "enviado" : "fallido", error: e1.error });
+  empresa.correos = empresa.correos || [];
+  empresa.correos.push({ tipo: "grupo_asignado", para: empresa.correo, fecha: e2.fecha, estado: e2.ok ? "enviado" : "fallido", error: e2.error });
+  await grupos.guardar(grupo);
+  await empresas.guardar(empresa);
+  return { ok: true, grupo: resumenGrupo(grupo), empresa: resumenEmpresa(empresa), correos: { lider: e1.ok, empresa: e2.ok } };
+}
+
 function resumenGrupo(g) {
   return { id: g.id, nombre: g.nombre, ies: g.ies && g.ies.nombre, iesClave: g.ies && g.ies.clave, area: g.area, estado: g.estado, estadoTexto: CAT.ESTADOS[g.estado] || g.estado, lider: g.lider, integrantes: g.integrantes.map((m) => ({ nombre: m.nombre, vinculacion: m.vinculacion, correo: m.correo, telefono: m.telefono, estado: m.estado })),
     personas: grupos.personas(g), confirmados: g.integrantes.filter((m) => m.estado === "confirmado").length, creado: g.creado, empresaAsignada: g.empresaAsignada || null, coordinadorVinculado: Boolean(g.iesId), actividades: (g.plan && g.plan.actividades || []).length };
@@ -67,7 +131,7 @@ module.exports = async function (req, res) {
         ies: { total: todasIes.length, conCoordinador: todasIes.filter((i) => i.clave).length },
         grupos: { total: todosGrupos.length, activos: activos.length, porEstado: porEstado(todosGrupos), personas: activos.reduce((n, g) => n + grupos.personas(g), 0), listosParaAsignar: todosGrupos.filter((g) => g.estado === "confirmado").length, asignados: todosGrupos.filter((g) => g.estado === "asignado").length }
       };
-      return responder(res, 200, { ok: true, tablero, empresas: todasEmpresas.map(resumenEmpresa).sort((a, b) => (a.creado < b.creado ? 1 : -1)), ies: todasIes.map((i) => resumenIes(i, todosGrupos)).sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), "es")), grupos: todosGrupos.map(resumenGrupo).sort((a, b) => (a.creado < b.creado ? 1 : -1)) });
+      return responder(res, 200, { ok: true, tablero, emparejamiento: emparejamiento(todasEmpresas, todosGrupos), empresas: todasEmpresas.map(resumenEmpresa).sort((a, b) => (a.creado < b.creado ? 1 : -1)), ies: todasIes.map((i) => resumenIes(i, todosGrupos)).sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), "es")), grupos: todosGrupos.map(resumenGrupo).sort((a, b) => (a.creado < b.creado ? 1 : -1)) });
     }
 
     if (req.method === "DELETE") {
@@ -140,26 +204,27 @@ module.exports = async function (req, res) {
         await grupos.guardar(grupo);
         return responder(res, 200, { ok: true, grupo: resumenGrupo(grupo) });
       }
-      if (grupo.estado !== "confirmado") return error(res, 409, "Solo se asignan grupos confirmados por su institución y sin empresa asignada.");
       const empresa = await empresas.cargarPorId(texto(cuerpo.empresaId, 64));
       if (!empresa) return error(res, 404, "No se encontró la empresa.");
-      if (empresa.grupoAsignado) return error(res, 409, "Esa empresa ya tiene un grupo asignado (" + empresa.grupoAsignado.nombre + ").");
-      if (!(empresa.aceptaciones && empresa.aceptaciones.terminos)) return error(res, 409, "La empresa aún no ha aceptado los términos del acompañamiento.");
-      const ahora = new Date().toISOString();
-      grupo.empresaAsignada = { id: empresa.id, nombre: empresa.datos.empresa, fecha: ahora, por: cuenta.correo };
-      grupo.estado = "asignado";
-      grupos.registrarEvento(grupo, "empresa_asignada:" + empresa.id);
-      empresa.grupoAsignado = { id: grupo.id, nombre: grupo.nombre, ies: grupo.ies.nombre, area: grupo.area, lider: { nombre: grupo.lider.nombre, correo: grupo.lider.correo, telefono: grupo.lider.telefono }, fecha: ahora };
-      empresas.registrarEvento(empresa, "grupo_asignado:" + grupo.id);
-      const m1 = correo.empresaAsignadaLider(grupo, empresa), m2 = correo.grupoAsignadoEmpresa(empresa, grupo);
-      const e1 = await correo.enviar({ para: grupo.correo, asunto: m1.asunto, html: m1.html });
-      const e2 = await correo.enviar({ para: empresa.correo, asunto: m2.asunto, html: m2.html });
-      grupo.correos.push({ tipo: "empresa_asignada", para: grupo.correo, fecha: e1.fecha, estado: e1.ok ? "enviado" : "fallido", error: e1.error });
-      empresa.correos = empresa.correos || [];
-      empresa.correos.push({ tipo: "grupo_asignado", para: empresa.correo, fecha: e2.fecha, estado: e2.ok ? "enviado" : "fallido", error: e2.error });
-      await grupos.guardar(grupo);
-      await empresas.guardar(empresa);
-      return responder(res, 200, { ok: true, grupo: resumenGrupo(grupo), empresa: resumenEmpresa(empresa), correos: { lider: e1.ok, empresa: e2.ok } });
+      const r = await asignar(grupo, empresa, cuenta);
+      if (!r.ok) return error(res, 409, r.error);
+      return responder(res, 200, r);
+    }
+
+    if (req.method === "POST" && accion === "asignar-sugeridos") {
+      const pares = Array.isArray(cuerpo.pares) ? cuerpo.pares.slice(0, 200) : [];
+      if (!pares.length) return error(res, 400, "Indique las parejas a asignar.");
+      const resultados = [];
+      for (const par of pares) {
+        const grupo = await grupos.cargarPorId(texto(par && par.grupoId, 64));
+        const empresa = await empresas.cargarPorId(texto(par && par.empresaId, 64));
+        if (!grupo || !empresa) { resultados.push({ grupoId: par && par.grupoId, empresaId: par && par.empresaId, ok: false, error: "Grupo o empresa no encontrados." }); continue; }
+        const r = await asignar(grupo, empresa, cuenta);
+        resultados.push({ grupoId: grupo.id, empresaId: empresa.id, grupo: grupo.nombre, empresa: empresa.datos.empresa, ok: r.ok, error: r.error, correos: r.correos });
+      }
+      secretaria.registrarEvento(cuenta, "asignacion_sugerida:" + resultados.filter((r) => r.ok).length + "/" + resultados.length);
+      await secretaria.guardar(cuenta);
+      return responder(res, 200, { ok: true, asignados: resultados.filter((r) => r.ok).length, resultados });
     }
 
     return error(res, 400, "Acción no reconocida.");
