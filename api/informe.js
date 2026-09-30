@@ -55,12 +55,12 @@ module.exports = async function (req, res) {
     if (!empresa.diagnostico || !empresa.diagnostico.completado) return error(res, 409, "El autodiagnóstico aún no se ha finalizado.");
 
     let archivo = await informe.cargarInforme(id);
-    if (!archivo) {
-      // Informe no archivado (por ejemplo, diagnósticos anteriores a esta función): se genera ahora.
+    if (!archivo || archivo.plantilla !== informe.PLANTILLA) {
+      // Informe no archivado o archivado con una plantilla anterior (por ejemplo, sin el gráfico radial): se regenera ahora.
       const pdf = await informe.generarPdf(empresa);
       const resumen = await informe.guardarInforme(empresa, pdf);
       empresa.informe = Object.assign({}, empresa.informe || {}, resumen);
-      empresas.registrarEvento(empresa, "informe_generado");
+      empresas.registrarEvento(empresa, archivo ? "informe_regenerado:" + informe.PLANTILLA : "informe_generado");
       await empresas.guardar(empresa);
       archivo = { nombre: resumen.nombre, tipo: "application/pdf", contenido: pdf };
     }
