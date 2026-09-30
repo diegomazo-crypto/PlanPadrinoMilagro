@@ -86,6 +86,7 @@
       if ((e.actualizacionesDatos || []).length) html += "<p class='diag__nota'>Actualizaciones de datos: " + e.actualizacionesDatos.map(function (a) { return fechaHora(a.fecha) + " (" + escapar((a.campos || []).join(", ")) + ")"; }).join("; ") + "</p>";
       if (dg.completado && res) {
         html += "<h3>Autodiagnóstico · versión " + (dg.version || 1) + " · " + fecha(dg.finalizado) + "</h3><div class='res__global'><div class='res__num'>" + res.global.toFixed(2) + "<span>/ 5</span></div><div><div class='res__nivel'>" + escapar(res.nivelGlobal) + "</div></div></div>";
+        html += "<figure class='res__radar res__radar--compacto'>" + window.PPM_RADAR.svg(res.capacidades) + "</figure>";
         html += "<div class='tabla-envoltura'><table><thead><tr><th>Capacidad</th><th>Ponderado</th><th>Nivel</th></tr></thead><tbody>" + res.capacidades.map(function (c) { return "<tr><td>" + escapar(c.nombre) + "</td><td>" + c.ponderado.toFixed(2) + "</td><td>" + escapar(c.nivel) + "</td></tr>"; }).join("") + "</tbody></table></div>";
         if ((dg.actualizaciones || []).length) html += "<p class='diag__nota'>Actualizaciones del autodiagnóstico: " + dg.actualizaciones.map(function (a) { return fechaHora(a.fecha) + (a.aplicada ? " (v" + a.version + ")" : " (pendiente)"); }).join("; ") + "</p>";
         html += "<div class='formulario__acciones'><a class='boton boton--primario boton--peq' href='/api/informe?id=" + encodeURIComponent(e.id) + "' download>Descargar el informe (PDF)</a></div>";
