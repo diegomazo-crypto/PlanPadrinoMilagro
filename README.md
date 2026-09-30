@@ -206,7 +206,7 @@ contraseña del buzón. Variables en Vercel (Production; también Preview si se 
 |---|---|
 | `TENANT_ID` | Identificador del tenant de Entra ID (lo entrega el equipo de TI). |
 | `CLIENT_ID` | Identificador de la aplicación registrada. |
-| `CLIENT_SECRET` | Secreto de la aplicación. Guardarlo solo en Vercel; al vencer, TI genera uno nuevo y se reemplaza. |
+| `CLIENT_SECRET` | Secreto de la aplicación. Guardarlo solo en Vercel; al vencer, TI genera uno nuevo y se reemplaza. **Vence en septiembre de 2027** (creado el 30 de septiembre de 2026 con vigencia de 12 meses): pedir el nuevo secreto a TI con anticipación y redesplegar. |
 | `REMITENTE` | Buzón desde el que se envía: `planpadrinomilagro@ceipa.edu.co`. |
 | `PPM_CORREO_REMITENTE` | Opcional; nombre visible, por defecto `Plan Milagro <planpadrinomilagro@ceipa.edu.co>`. |
 | `PPM_CORREO_COPIA` | Opcional; buzón que recibe copia del informe. Por defecto el mismo buzón del Plan; vacío para no copiar. |
