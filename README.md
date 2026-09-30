@@ -100,7 +100,7 @@ Flujo de una empresa:
    acompañamiento y confidencialidad. Si la empresa no acepta, el proceso termina y se le agradece.
 3. **Autodiagnóstico** de madurez de capacidades (modelo CRL): 5 capacidades, 46 factores en escala 0–5
    y datos de desempeño. Se guarda paso a paso; la empresa puede salir y retomar donde quedó.
-4. **Resultados** ponderados por capacidad y globales, con nivel y recomendación. Después, la empresa puede
+4. **Resultados** ponderados por capacidad y globales, con nivel, recomendación y un **gráfico radial** del perfil de las cinco capacidades (`assets/js/radar.js`, SVG en el portal y dibujo vectorial en el informe PDF; lo ven también el líder del grupo y la secretaría técnica). Después, la empresa puede
    **actualizar** el autodiagnóstico: cada cambio guardado queda registrado (fecha y factores) y, al recorrer el
    instrumento hasta el final, se recalculan los resultados, sube la versión y se envía un nuevo informe.
 5. **Plan de trabajo**: cuando la secretaría técnica asigna un grupo, la empresa ve su grupo padrino y consulta o

@@ -110,6 +110,7 @@
     } else {
       html += "<h3>Autodiagnóstico · versión " + (dg.version || 1) + (dg.finalizado ? " · " + escapar(String(dg.finalizado).slice(0, 10)) : "") + "</h3>";
       html += "<div class='res__global'><div class='res__num'>" + r.global.toFixed(2) + "<span>/ 5</span></div><div><div class='res__nivel'>Nivel global: " + escapar(r.nivelGlobal) + "</div></div></div>";
+      html += "<figure class='res__radar'>" + window.PPM_RADAR.svg(r.capacidades) + "<figcaption>Perfil de capacidades en escala 0–5.</figcaption></figure>";
       html += "<div class='tabla-envoltura'><table><thead><tr><th>Capacidad</th><th>Ponderado</th><th>Nivel</th><th>Recomendación</th></tr></thead><tbody>" + r.capacidades.map(function (c) { return "<tr><td>" + escapar(c.nombre) + "</td><td>" + c.ponderado.toFixed(2) + "</td><td>" + escapar(c.nivel) + "</td><td>" + escapar(c.recomendacion) + "</td></tr>"; }).join("") + "</tbody></table></div>";
       var I = window.PPM_INSTRUMENTO;
       if (I && dg.respuestas) {

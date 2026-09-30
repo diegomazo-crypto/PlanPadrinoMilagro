@@ -416,6 +416,7 @@
     $("#res-empresa").textContent = (estado.empresa && estado.empresa.empresa) || "su empresa";
     $("#res-version").textContent = "Autodiagnóstico completado · versión " + (d.version || 1) + (d.finalizado ? " · " + fecha(d.finalizado) : "");
     var html = "<div class='res__global'><div class='res__num'>" + r.global.toFixed(2) + "<span>/ 5</span></div><div><div class='res__nivel'>Nivel global: " + escapar(r.nivelGlobal) + "</div><div class='diag__nota'>Promedio de las cinco capacidades, cada una ponderada según el modelo CRL.</div></div></div>";
+    html += "<figure class='res__radar'>" + window.PPM_RADAR.svg(r.capacidades) + "<figcaption>Perfil de capacidades en escala 0–5: cuanto más se acerca el polígono al borde, más madura es la capacidad.</figcaption></figure>";
     html += "<div class='res__lista'>" + r.capacidades.map(function (c) {
       var pct = Math.round(c.ponderado / 5 * 100);
       return "<div class='res__item'><div class='res__fila'><strong>" + escapar(c.nombre) + "</strong><span>" + c.ponderado.toFixed(2) + " · " + escapar(c.nivel) + "</span></div>" +
