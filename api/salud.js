@@ -40,6 +40,10 @@ async function inventario(req, res, url) {
     salida.ies = resumir(instituciones, (i) => ({ institucion: i.institucion && i.institucion.nombre, clavePadron: i.institucion && i.institucion.clave }));
     salida.grupos = resumir(grupos, (g) => ({ nombre: g.nombre, ies: g.ies && g.ies.nombre, clavePadron: g.ies && g.ies.clave, iesId: g.iesId ? String(g.iesId).slice(0, 8) : null, integrantes: (g.integrantes || []).length, confirmados: (g.integrantes || []).filter((m) => m.estado === "confirmado").length, empresaAsignada: Boolean(g.empresaAsignada) }));
     salida.ilegibles = { empresas: rutas.empresas.length - empresas.length, ies: rutas.ies.length - instituciones.length, grupos: rutas.grupos.length - grupos.length };
+    // Eliminaciones y emparejamientos hechos desde el tablero de la secretaría (sin datos personales)
+    const cuentas = [];
+    for (const r of rutas.secretaria) { const c = await almacen.leerRegistro(r); if (c) cuentas.push(c); }
+    salida.accionesSecretaria = cuentas.flatMap((c) => (c.historial || []).filter((h) => /eliminad|asignacion|asignada/.test(h.evento)).map((h) => ({ fecha: h.fecha, evento: h.evento })));
   } catch (e) {
     salida.ok = false; salida.error = String((e && e.message) || e).slice(0, 300);
   }
